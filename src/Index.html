@@ -1456,6 +1456,7 @@
         ["Photos", portalData.stats.photos],
         ["Live", portalData.stats.live],
         ["Under Contract", portalData.stats.underContract],
+        ["Closed", portalData.stats.closed],
         ["Needs Review", portalData.stats.needsReview]
       ];
 
@@ -1583,6 +1584,8 @@
         return (
           '<button class="primary" onclick="completeInternal(\'' +
           escapeJs(item.transactionId) +
+          "', '" +
+          escapeJs(item.currentActionKey) +
           "', this)\">Mark Complete</button>"
         );
       }
@@ -1613,7 +1616,7 @@
         .launchCurrentAction(transactionId);
     }
 
-    function completeInternal(transactionId, button) {
+    function completeInternal(transactionId, actionKey, button) {
       const notes = prompt("Optional completion note:", "") || "";
 
       button.disabled = true;
@@ -1621,6 +1624,9 @@
 
       google.script.run
         .withSuccessHandler(function () {
+          if (actionKey === "ARCHIVE") {
+            alert("🎉 Congratulations on your closing!");
+          }
           refreshPortalAndWorkspace(transactionId);
         })
         .withFailureHandler(function (error) {
@@ -2163,6 +2169,8 @@
             '<button class="primary" ' +
               'onclick="completeWorkspaceInternal(\'' +
               escapeJs(data.transactionId) +
+              "', '" +
+              escapeJs(data.workflow.currentActionKey) +
               "', this)\">" +
               "Mark Current Task Complete" +
             "</button>" +
@@ -2210,6 +2218,7 @@
 
     function completeWorkspaceInternal(
       transactionId,
+      actionKey,
       button
     ) {
       const notes =
@@ -2223,6 +2232,9 @@
 
       google.script.run
         .withSuccessHandler(function () {
+          if (actionKey === "ARCHIVE") {
+            alert("🎉 Congratulations on your closing!");
+          }
           refreshPortalAndWorkspace(transactionId);
         })
         .withFailureHandler(function (error) {

@@ -666,7 +666,7 @@ function advanceTransaction_(user, tx, action, details) {
     'Current Action Key': nextAction ? nextAction['Action Key'] : '',
     'Current Action Name': nextAction ? nextAction['Action Name'] : '',
     'Last Action By': user.email,
-    'Status': nextStageKey === 'CLOSED' ? 'Closed' : tx['Status']
+    'Status': (nextStageKey === 'CLOSED' && !nextAction) ? 'Closed' : tx['Status']
   });
 
   logActivity_(
@@ -1087,6 +1087,9 @@ function calculateStats_(transactions) {
     ).length,
     underContract: transactions.filter(tx =>
       tx['Current Stage Key'] === 'UNDER_CONTRACT'
+    ).length,
+    closed: transactions.filter(tx =>
+      tx['Status'] === 'Closed'
     ).length,
     needsReview: transactions.filter(tx =>
       tx['Needs Review?'] === 'Yes'
