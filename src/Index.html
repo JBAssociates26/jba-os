@@ -1839,30 +1839,8 @@
 
           '<div class="workspace-section">' +
             '<div class="workspace-stage-row">' +
-              "<div>" +
-                '<div class="detail-label">Current stage</div>' +
-
-                '<div class="workspace-current-stage">' +
-                  escapeHtml(
-                    data.workflow.currentStageName ||
-                    "No stage"
-                  ) +
-                "</div>" +
-
-                '<div class="workspace-current-action">' +
-                  "<strong>Current task:</strong> " +
-                  escapeHtml(
-                    data.workflow.currentActionName ||
-                    "No action configured"
-                  ) +
-                  "<br>" +
-
-                  "<strong>Assigned to:</strong> " +
-                  escapeHtml(
-                    data.workflow.assignedRole ||
-                    "Not assigned"
-                  ) +
-                "</div>" +
+              '<div class="workspace-section-title" style="margin-bottom:0;">' +
+                "Overall Progress" +
               "</div>" +
 
               '<div class="stage">' +
@@ -1870,7 +1848,7 @@
               "</div>" +
             "</div>" +
 
-            '<div class="workspace-progress-track">' +
+            '<div class="workspace-progress-track" style="margin-top:14px;">' +
               '<div class="workspace-progress-fill" ' +
                 'style="width:' +
                 Number(data.workflow.progressPercent || 0) +
@@ -1881,8 +1859,6 @@
               Number(data.workflow.progressPercent || 0) +
               "% workflow progress" +
             "</div>" +
-
-            actionButtons +
           "</div>" +
 
           '<div class="workspace-section">' +
