@@ -1565,21 +1565,27 @@
 
           '<div class="card-bottom">' +
             "<div>" +
-              "<small>Current action</small><br>" +
+              (
+                item.status === "Active"
+                  ? (
+                      "<small>Current action</small><br>" +
 
-              "<strong>" +
-                escapeHtml(
-                  item.currentActionName ||
-                  "No action configured"
-                ) +
-              "</strong>" +
+                      "<strong>" +
+                        escapeHtml(
+                          item.currentActionName ||
+                          "No action configured"
+                        ) +
+                      "</strong>" +
 
-              '<div class="meta">' +
-                "Assigned role: " +
-                escapeHtml(
-                  item.assignedRole || "Not assigned"
-                ) +
-              "</div>" +
+                      '<div class="meta">' +
+                        "Assigned role: " +
+                        escapeHtml(
+                          item.assignedRole || "Not assigned"
+                        ) +
+                      "</div>"
+                    )
+                  : ""
+              ) +
             "</div>" +
 
             '<div onclick="event.stopPropagation()">' +
