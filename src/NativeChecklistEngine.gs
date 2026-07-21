@@ -252,6 +252,170 @@ function checklistV4Row_(
   };
 }
 
+/* =========================================================
+   CONTRACT-TO-CLOSE CHECKLISTS
+   Accepted Offer (Agent) -> Under Contract (TC) -> Closing (TC)
+
+   These are a starting draft. Since templates are config-driven,
+   adjust items directly in the Checklist Templates sheet afterward —
+   no code changes needed.
+
+   Run setupContractToCloseChecklists_() once. Safe to re-run.
+   ========================================================= */
+
+function setupContractToCloseChecklists_() {
+  seedAcceptedOfferChecklistTemplate_();
+  seedContractChecklistTemplate_();
+  seedClosingChecklistTemplate_();
+}
+
+function acceptedOfferChecklistRow_(
+  section, order, itemKey, label, type,
+  requiredMode, conditionalRule, options, helpText
+) {
+  return {
+    'Template ID': 'SELLER_LISTING_ACCEPTED_OFFER_V1',
+    'Workflow Key': 'SELLER_LISTING',
+    'Stage Key': 'LIVE',
+    'Action Key': 'ACCEPTED_OFFER',
+    'Section': section,
+    'Item Order': order,
+    'Item Key': itemKey,
+    'Item Label': label,
+    'Item Type': type,
+    'Required Mode': requiredMode,
+    'Conditional Rule': conditionalRule,
+    'Options': options,
+    'Default Value': '',
+    'Read Only?': 'No',
+    'Source Field': '',
+    'Help Text': helpText,
+    'Active?': 'Yes'
+  };
+}
+
+function seedAcceptedOfferChecklistTemplate_() {
+  const rows = [
+    acceptedOfferChecklistRow_('Buyer Information', 10, 'BUYER_NAME', 'Buyer Full Name', 'TEXT', 'YES', '', '', ''),
+    acceptedOfferChecklistRow_('Buyer Information', 20, 'BUYER_AGENT_NAME', 'Buyer Agent Name', 'TEXT', 'NO', '', '', ''),
+    acceptedOfferChecklistRow_('Buyer Information', 30, 'BUYER_AGENT_EMAIL', 'Buyer Agent Email', 'EMAIL', 'NO', '', '', ''),
+    acceptedOfferChecklistRow_('Buyer Information', 40, 'BUYER_AGENT_PHONE', 'Buyer Agent Phone', 'PHONE', 'NO', '', '', ''),
+
+    acceptedOfferChecklistRow_('Offer Terms', 50, 'CONTRACT_PRICE', 'Contract Price', 'CURRENCY', 'YES', '', '', ''),
+    acceptedOfferChecklistRow_('Offer Terms', 60, 'TARGET_CLOSING_DATE', 'Target Closing Date', 'DATE', 'YES', '', '', ''),
+    acceptedOfferChecklistRow_('Offer Terms', 70, 'FINANCING_TYPE', 'Financing Type', 'SELECT', 'YES', '', 'Cash|Conventional|FHA|VA|Other', ''),
+
+    acceptedOfferChecklistRow_('Contingencies', 80, 'INSPECTION_CONTINGENCY_DATE', 'Inspection Contingency Date', 'DATE', 'NO', '', '', ''),
+    acceptedOfferChecklistRow_('Contingencies', 90, 'APPRAISAL_CONTINGENCY_DATE', 'Appraisal Contingency Date', 'DATE', 'CONDITIONAL', 'FINANCING_TYPE!=Cash', '', 'Required unless the offer is cash.'),
+    acceptedOfferChecklistRow_('Contingencies', 100, 'FINANCING_CONTINGENCY_DATE', 'Financing Contingency Date', 'DATE', 'CONDITIONAL', 'FINANCING_TYPE!=Cash', '', 'Required unless the offer is cash.'),
+
+    acceptedOfferChecklistRow_('Additional Information', 110, 'OFFER_NOTES', 'Notes', 'TEXTAREA', 'NO', '', '', ''),
+
+    acceptedOfferChecklistRow_('Final Confirmation', 120, 'READY_FOR_CONTRACT', 'Offer details are accurate and ready for Transaction Coordinator.', 'CHECKBOX', 'YES', '', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+function contractChecklistRow_(
+  section, order, itemKey, label, type,
+  requiredMode, options, readOnly, sourceField, helpText
+) {
+  return {
+    'Template ID': 'SELLER_LISTING_CONTRACT_CHECKLIST_V1',
+    'Workflow Key': 'SELLER_LISTING',
+    'Stage Key': 'UNDER_CONTRACT',
+    'Action Key': 'CONTRACT_CHECKLIST',
+    'Section': section,
+    'Item Order': order,
+    'Item Key': itemKey,
+    'Item Label': label,
+    'Item Type': type,
+    'Required Mode': requiredMode,
+    'Conditional Rule': '',
+    'Options': options,
+    'Default Value': '',
+    'Read Only?': readOnly,
+    'Source Field': sourceField,
+    'Help Text': helpText,
+    'Active?': 'Yes'
+  };
+}
+
+function seedContractChecklistTemplate_() {
+  const rows = [
+    contractChecklistRow_('Contract Details', 10, 'CONTRACT_PRICE', 'Contract Price', 'CURRENCY', 'NO', '', 'Yes', 'Contract Price', ''),
+    contractChecklistRow_('Contract Details', 20, 'CLOSING_DATE', 'Closing Date', 'DATE', 'NO', '', 'Yes', 'Closing Date', ''),
+
+    contractChecklistRow_('Vendors', 30, 'TITLE_COMPANY', 'Title Company', 'TEXT', 'NO', '', 'No', '', ''),
+    contractChecklistRow_('Vendors', 40, 'HOME_WARRANTY_ORDERED', 'Home Warranty Ordered?', 'SELECT', 'NO', 'Yes|No|Not Applicable', 'No', '', ''),
+
+    contractChecklistRow_('Additional Information', 50, 'CONTRACT_NOTES', 'Notes', 'TEXTAREA', 'NO', '', 'No', '', ''),
+
+    contractChecklistRow_('Final Confirmation', 60, 'READY_FOR_CLOSING_PREP', 'This file is ready for closing preparation.', 'CHECKBOX', 'YES', '', 'No', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+function closingChecklistRow_(
+  section, order, itemKey, label, type,
+  requiredMode, options, readOnly, sourceField, helpText
+) {
+  return {
+    'Template ID': 'SELLER_LISTING_CLOSING_CHECKLIST_V1',
+    'Workflow Key': 'SELLER_LISTING',
+    'Stage Key': 'CLOSING',
+    'Action Key': 'CLOSING_CHECKLIST',
+    'Section': section,
+    'Item Order': order,
+    'Item Key': itemKey,
+    'Item Label': label,
+    'Item Type': type,
+    'Required Mode': requiredMode,
+    'Conditional Rule': '',
+    'Options': options,
+    'Default Value': '',
+    'Read Only?': readOnly,
+    'Source Field': sourceField,
+    'Help Text': helpText,
+    'Active?': 'Yes'
+  };
+}
+
+function seedClosingChecklistTemplate_() {
+  const rows = [
+    closingChecklistRow_('Closing Details', 10, 'CLOSING_DATE', 'Closing Date', 'DATE', 'NO', '', 'Yes', 'Closing Date', ''),
+
+    closingChecklistRow_('Final Steps', 20, 'FINAL_WALKTHROUGH_COMPLETE', 'Final Walkthrough Completed?', 'SELECT', 'YES', 'Yes|No', 'No', '', ''),
+    closingChecklistRow_('Final Steps', 30, 'CLOSING_DISCLOSURE_SENT', 'Closing Disclosure Sent?', 'SELECT', 'YES', 'Yes|No', 'No', '', ''),
+    closingChecklistRow_('Final Steps', 40, 'KEYS_TRANSFERRED', 'Keys/Access Transferred?', 'SELECT', 'YES', 'Yes|No', 'No', '', ''),
+    closingChecklistRow_('Final Steps', 50, 'COMMISSION_CONFIRMED', 'Commission Disbursement Confirmed?', 'SELECT', 'YES', 'Yes|No', 'No', '', ''),
+    closingChecklistRow_('Final Steps', 60, 'MLS_UPDATED_CLOSED', 'MLS Status Updated to Closed?', 'SELECT', 'YES', 'Yes|No', 'No', '', ''),
+
+    closingChecklistRow_('Additional Information', 70, 'CLOSING_NOTES', 'Notes', 'TEXTAREA', 'NO', '', 'No', '', ''),
+
+    closingChecklistRow_('Final Confirmation', 80, 'READY_TO_ARCHIVE', 'This transaction is ready to archive.', 'CHECKBOX', 'YES', '', 'No', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+/**
+ * Writes the accepted offer's contract price / closing date onto the
+ * transaction row so later checklists (Under Contract, Closing) can
+ * display them read-only via Source Field.
+ */
+function syncAcceptedOfferToTransaction_(tx, checklist) {
+  const values = {};
+  checklist.items.forEach(item => values[item.itemKey] = item.value || '');
+
+  updateTransactionFields_(tx['Transaction ID'], {
+    'Contract Price': values['CONTRACT_PRICE'] || '',
+    'Closing Date': values['TARGET_CLOSING_DATE'] || ''
+  });
+}
+
 function isChecklistTemplateV4_() {
   const sheet = getDatabase_().getSheetByName(JBA_CHECKLIST.templatesSheet);
   if (!sheet || sheet.getLastRow() === 0) return false;
@@ -1440,6 +1604,10 @@ function completeNativeChecklist(transactionId, actionKey, submittedItems) {
   if (actionKey === 'PHOTO_ORDER') {
     sendPhotoOrderNotificationToTC_(auth.tx, checklist, auth.user);
     createTasksForAction_(auth.user, auth.tx, actionKey);
+  }
+
+  if (actionKey === 'ACCEPTED_OFFER') {
+    syncAcceptedOfferToTransaction_(auth.tx, checklist);
   }
 
   if (isParallel) {

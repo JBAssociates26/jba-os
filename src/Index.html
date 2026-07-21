@@ -1510,7 +1510,7 @@
 
     function renderActionButton(item) {
       if (
-        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION"].includes(item.currentActionKey) &&
+        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST"].includes(item.currentActionKey) &&
         item.canOpenForm
       ) {
         return (
@@ -2073,7 +2073,7 @@
 
     function renderWorkspaceActionButtons(data) {
       if (
-        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION"].includes(data.workflow.currentActionKey) &&
+        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST"].includes(data.workflow.currentActionKey) &&
         (
           data.permissions.canOpenForm ||
           data.permissions.canCompleteInternalAction
