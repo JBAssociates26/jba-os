@@ -456,7 +456,7 @@ function seedClosingChecklistTemplate_() {
 
     closingChecklistRow_('Additional Information', 70, 'CLOSING_NOTES', 'Notes', 'TEXTAREA', 'NO', '', 'No', '', ''),
 
-    closingChecklistRow_('Final Confirmation', 80, 'READY_TO_ARCHIVE', 'This transaction is ready to archive.', 'CHECKBOX', 'YES', '', 'No', '', '')
+    closingChecklistRow_('Final Confirmation', 80, 'READY_TO_ARCHIVE', 'Move to Post Close', 'CHECKBOX', 'YES', '', 'No', '', '')
   ];
 
   upsertChecklistTemplateRows_(rows);
