@@ -1424,6 +1424,27 @@
     </div>
   </div>
 
+  <div
+    id="restoreConfirmBackdrop"
+    class="modal-backdrop"
+    onclick="closeRestoreConfirmFromBackdrop(event)"
+  >
+    <div class="modal" style="max-width:380px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Restore Transaction?</div>
+          <div class="subtitle">This will return the transaction to its previous workflow stage.</div>
+        </div>
+        <button class="close" onclick="closeRestoreConfirmModal()">&times;</button>
+      </div>
+
+      <div style="padding:20px;display:flex;justify-content:flex-end;gap:10px;">
+        <button type="button" class="secondary" onclick="closeRestoreConfirmModal()">Cancel</button>
+        <button type="button" class="primary" id="restoreConfirmButton" onclick="confirmRestoreTransaction()">Restore</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let portalData = null;
     let wizardOptions = null;
@@ -1646,14 +1667,18 @@
 
       if (item.status === "Lost") {
         return (
-          '<div class="detail-label">Status</div>' +
-          '<div style="font-weight:700;">🔴 Did Not Secure Listing</div>' +
+          '<div class="stage" style="background:#fbeceb;color:var(--danger);display:inline-block;">' +
+            "🔴 Lost Listing" +
+          "</div>" +
+          '<div style="margin-top:6px;">' +
+            "Archive Reason: " + escapeHtml(item.archiveReason || "Not specified") +
+          "</div>" +
 
           '<div class="detail-label" style="margin-top:8px;">Archived</div>' +
           '<div>' + escapeHtml(item.updatedAt || "Not available") + "</div>" +
 
-          '<div class="detail-label" style="margin-top:8px;">Reason</div>' +
-          '<div>' + escapeHtml(item.archiveReason || "Not specified") + "</div>" +
+          '<div class="detail-label" style="margin-top:8px;">Archived By</div>' +
+          '<div>' + escapeHtml(item.lastActionBy || "Not available") + "</div>" +
 
           (
             item.archiveNotes
@@ -2050,26 +2075,27 @@
             (
               data.status === "Lost"
                 ? (
-                    '<div class="detail-label">Status</div>' +
-                    '<div style="font-weight:700;">🔴 Did Not Secure Listing</div>' +
+                    '<div class="stage" style="background:#fbeceb;color:var(--danger);display:inline-block;">' +
+                      "🔴 Lost Listing" +
+                    "</div>" +
+                    '<div style="margin-top:6px;">' +
+                      "Archive Reason: " + escapeHtml(data.listingDetails.archiveReason || "Not specified") +
+                    "</div>" +
 
                     '<div class="detail-label" style="margin-top:10px;">Archived</div>' +
                     '<div>' + escapeHtml(data.listingDetails.updatedAt || "Not available") + "</div>" +
 
-                    '<div class="detail-label" style="margin-top:10px;">Reason</div>' +
-                    '<div>' + escapeHtml(data.listingDetails.archiveReason || "Not specified") + "</div>" +
+                    '<div class="detail-label" style="margin-top:10px;">Archived By</div>' +
+                    '<div>' + escapeHtml(data.listingDetails.lastActionBy || "Not available") + "</div>" +
 
                     (
                       data.listingDetails.archiveNotes
                         ? (
-                            '<div class="detail-label" style="margin-top:10px;">Notes</div>' +
+                            '<div class="detail-label" style="margin-top:10px;margin-bottom:14px;">Notes</div>' +
                             '<div>' + escapeHtml(data.listingDetails.archiveNotes) + "</div>"
                           )
-                        : ""
-                    ) +
-
-                    '<div class="detail-label" style="margin-top:10px;margin-bottom:14px;">Archived By</div>' +
-                    '<div>' + escapeHtml(data.listingDetails.lastActionBy || "Not available") + "</div>"
+                        : '<div style="margin-bottom:14px;"></div>'
+                    )
                   )
                 : (
                     '<div class="detail-label">Next step</div>' +
@@ -2584,21 +2610,49 @@
         );
     }
 
-    function restoreTransaction(transactionId, button) {
-      if (!confirm("Restore this transaction to the active workflow?")) {
-        return;
-      }
+    let restoreConfirmTransactionId = null;
+    let restoreConfirmButton = null;
 
-      button.disabled = true;
-      button.textContent = "Restoring…";
+    function restoreTransaction(transactionId, button) {
+      restoreConfirmTransactionId = transactionId;
+      restoreConfirmButton = button;
+      document.getElementById("restoreConfirmBackdrop").classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeRestoreConfirmModal() {
+      document.getElementById("restoreConfirmBackdrop").classList.remove("open");
+      document.body.style.overflow = "";
+      restoreConfirmTransactionId = null;
+      restoreConfirmButton = null;
+    }
+
+    function closeRestoreConfirmFromBackdrop(event) {
+      if (event.target.id === "restoreConfirmBackdrop") {
+        closeRestoreConfirmModal();
+      }
+    }
+
+    function confirmRestoreTransaction() {
+      const transactionId = restoreConfirmTransactionId;
+      const originalButton = restoreConfirmButton;
+      const modalButton = document.getElementById("restoreConfirmButton");
+
+      modalButton.disabled = true;
+      modalButton.textContent = "Restoring…";
+      if (originalButton) originalButton.disabled = true;
 
       google.script.run
         .withSuccessHandler(function () {
+          modalButton.disabled = false;
+          modalButton.textContent = "Restore";
+          closeRestoreConfirmModal();
           refreshPortalAndWorkspace(transactionId);
         })
         .withFailureHandler(function (error) {
-          button.disabled = false;
-          button.textContent = "🟢 Restore Transaction";
+          modalButton.disabled = false;
+          modalButton.textContent = "Restore";
+          if (originalButton) originalButton.disabled = false;
           alert(error.message || String(error));
         })
         .restoreTransactionToActive(transactionId);

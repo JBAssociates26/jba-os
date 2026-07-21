@@ -546,6 +546,7 @@ function toClientTransaction_(tx, user) {
     archiveReason: tx['Archive Reason'] || '',
     archiveNotes: tx['Archive Notes'] || '',
     updatedAt: tx['Updated At'] || '',
+    lastActionBy: tx['Last Action By'] || '',
     needsReview: user.role === 'Agent' ? false : tx['Needs Review?'] === 'Yes',
     reviewReasons: user.canViewFinancials ? tx['Review Reasons'] : '',
     canLaunchAction: Boolean(next),
