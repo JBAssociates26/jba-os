@@ -180,6 +180,7 @@ function setupTransactions_(ss) {
     'Contract Price',
     'Closing Date',
     'MLS Status',
+    'Follow-Up Flag',
     'Needs Review?',
     'Review Reasons',
     'Urgency',
@@ -506,9 +507,7 @@ function getPortalData() {
       canReassign: user.canReassign
     },
     stats: calculateStats_(transactions),
-    transactions: transactions
-      .filter(tx => tx['Status'] !== 'Closed')
-      .map(tx => toClientTransaction_(tx, user))
+    transactions: transactions.map(tx => toClientTransaction_(tx, user))
   };
 }
 
@@ -541,6 +540,7 @@ function toClientTransaction_(tx, user) {
     urgency: tx['Urgency'],
     binderStatus: tx['Binder Status'],
     mlsStatus: tx['MLS Status'] || '',
+    followUpFlag: tx['Follow-Up Flag'] || '',
     needsReview: user.role === 'Agent' ? false : tx['Needs Review?'] === 'Yes',
     reviewReasons: user.canViewFinancials ? tx['Review Reasons'] : '',
     canLaunchAction: Boolean(next),
@@ -606,6 +606,123 @@ function completeInternalAction(transactionId, notes) {
   }
 
   return advanceTransaction_(auth.user, auth.tx, action, notes || '');
+}
+
+const LISTING_APPOINTMENT_OUTCOMES = ['SECURED', 'ARCHIVED', 'RESCHEDULED', 'FOLLOW_UP'];
+
+/**
+ * Records the outcome of a Listing Appointment. Replaces the generic
+ * "Mark Complete" for the RECORD_OUTCOME action with four distinct,
+ * intentional outcomes instead of a single ambiguous completion.
+ */
+function recordListingAppointmentOutcome(transactionId, outcome, notes) {
+  if (!LISTING_APPOINTMENT_OUTCOMES.includes(outcome)) {
+    throw new Error('Unknown outcome: ' + outcome);
+  }
+
+  const auth = getAuthorizedTransaction_(transactionId);
+  const action = getCurrentActionForTransaction_(auth.tx);
+
+  if (!action || action['Action Key'] !== 'RECORD_OUTCOME') {
+    throw new Error('This transaction is not awaiting a listing appointment outcome.');
+  }
+  if (!canUserPerformAction_(auth.user, action)) {
+    throw new Error('You are not authorized to record this outcome.');
+  }
+
+  if (outcome === 'SECURED') {
+    updateTransactionFields_(transactionId, { 'Follow-Up Flag': '' });
+    return advanceTransaction_(auth.user, auth.tx, action, notes || '');
+  }
+
+  if (outcome === 'ARCHIVED') {
+    updateTransactionFields_(transactionId, {
+      'Status': 'Lost',
+      'Follow-Up Flag': '',
+      'Updated At': new Date(),
+      'Last Action By': auth.user.email
+    });
+
+    logActivity_(
+      auth.user,
+      transactionId,
+      'LISTING_ARCHIVED',
+      auth.tx['Current Stage Name'],
+      auth.tx['Current Stage Name'],
+      action['Action Name'],
+      '',
+      notes || 'Listing did not secure.'
+    );
+
+    return { success: true, transactionId: transactionId };
+  }
+
+  const flag = outcome === 'RESCHEDULED' ? 'Rescheduled' : 'Follow-Up Needed';
+
+  updateTransactionFields_(transactionId, {
+    'Follow-Up Flag': flag,
+    'Updated At': new Date(),
+    'Last Action By': auth.user.email
+  });
+
+  logActivity_(
+    auth.user,
+    transactionId,
+    'LISTING_APPOINTMENT_' + outcome,
+    auth.tx['Current Stage Name'],
+    auth.tx['Current Stage Name'],
+    action['Action Name'],
+    '',
+    notes || flag
+  );
+
+  return { success: true, transactionId: transactionId };
+}
+
+/**
+ * Restores a non-Active transaction (Closed, Lost, etc.) back to Active.
+ * Backfills a sensible current action if one isn't already set (e.g. a
+ * closed transaction whose action was cleared on completion).
+ */
+function restoreTransactionToActive(transactionId) {
+  const auth = getAuthorizedTransaction_(transactionId);
+
+  if (!['Executive Admin', 'Operations Admin'].includes(auth.user.role)) {
+    throw new Error('You are not authorized to restore this transaction.');
+  }
+
+  const updates = {
+    'Status': 'Active',
+    'Updated At': new Date(),
+    'Last Action By': auth.user.email
+  };
+
+  if (!auth.tx['Current Action Key']) {
+    const fallbackAction = getFirstActionForStage_(
+      auth.tx['Workflow Key'],
+      auth.tx['Current Stage Key']
+    );
+
+    if (fallbackAction) {
+      updates['Current Action Key'] = fallbackAction['Action Key'];
+      updates['Current Action Name'] = fallbackAction['Action Name'];
+    }
+  }
+
+  updateTransactionFields_(transactionId, updates);
+
+  logActivity_(
+    auth.user,
+    transactionId,
+    'TRANSACTION_RESTORED',
+    auth.tx['Current Stage Name'],
+    auth.tx['Current Stage Name'],
+    '',
+    '',
+    'Restored to Active'
+  );
+
+  return { success: true, transactionId: transactionId };
 }
 
 function canUserPerformAction_(user, action) {
