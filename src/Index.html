@@ -1621,7 +1621,7 @@
 
       google.script.run
         .withSuccessHandler(function () {
-          window.location.reload();
+          refreshPortalAndWorkspace(transactionId);
         })
         .withFailureHandler(function (error) {
           button.disabled = false;
