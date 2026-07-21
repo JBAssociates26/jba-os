@@ -478,6 +478,75 @@ function syncContractDetailsToTransaction_(tx, checklist) {
   });
 }
 
+/**
+ * Notifies the (external) Transaction Coordinator that the transaction
+ * has moved to Pending. Only sent when ABO_OR_PENDING is specifically
+ * "Pending" - ABO does not trigger this.
+ */
+function sendPendingNotificationToTC_(tx, checklist, user) {
+  const assignedTc = normalizeEmail_(tx['Assigned TC Email']);
+  const operations = normalizeEmail_(tx['Assigned Operations Email']);
+  const recipient = assignedTc || operations;
+  const agentEmail = normalizeEmail_(tx['Agent Email']);
+
+  if (!recipient) return;
+
+  const values = {};
+  checklist.items.forEach(item => values[item.itemKey] = item.value || '');
+
+  const address =
+    tx['Property Address'] ||
+    tx['Address Line 1'] ||
+    'Address pending';
+
+  const htmlBody =
+    '<div style="font-family:Arial,sans-serif;color:#27231f;max-width:720px;">' +
+      '<h2 style="margin-bottom:4px;">Transaction is Pending</h2>' +
+      '<p style="margin-top:0;color:#6f685f;">' +
+        escapeHtml_(address) +
+      '</p>' +
+      '<p>This transaction has been marked Pending and is ready for you to take it from here.</p>' +
+      '<table style="border-collapse:collapse;width:100%;margin-top:18px;">' +
+        '<tr>' +
+          '<td style="padding:8px 10px;border-bottom:1px solid #ece8e2;font-weight:700;">Transaction Amount</td>' +
+          '<td style="padding:8px 10px;border-bottom:1px solid #ece8e2;">' + escapeHtml_(String(values['TRANSACTION_AMOUNT'] || '—')) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td style="padding:8px 10px;border-bottom:1px solid #ece8e2;font-weight:700;">Under Contract Date</td>' +
+          '<td style="padding:8px 10px;border-bottom:1px solid #ece8e2;">' + escapeHtml_(String(values['UNDER_CONTRACT_DATE'] || '—')) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td style="padding:8px 10px;border-bottom:1px solid #ece8e2;font-weight:700;">Forecasted Closed Date</td>' +
+          '<td style="padding:8px 10px;border-bottom:1px solid #ece8e2;">' + escapeHtml_(String(values['FORECASTED_CLOSED_DATE'] || '—')) + '</td>' +
+        '</tr>' +
+      '</table>' +
+      '<p style="margin-top:18px;"><strong>Submitted by:</strong> ' +
+        escapeHtml_(user.displayName || user.email) +
+      '</p>' +
+    '</div>';
+
+  MailApp.sendEmail({
+    to: recipient,
+    cc: agentEmail || '',
+    subject: 'Transaction Pending — ' + address,
+    body: address + ' has moved to Pending.',
+    htmlBody: htmlBody,
+    name: 'JBA OS'
+  });
+
+  logActivity_(
+    user,
+    tx['Transaction ID'],
+    'PENDING_NOTIFICATION_SENT',
+    tx['Current Stage Name'],
+    tx['Current Stage Name'],
+    'Complete Under Contract Checklist',
+    '',
+    'Pending notification emailed to ' + recipient +
+      (agentEmail ? ' and CC’d to ' + agentEmail : '')
+  );
+}
+
 function isChecklistTemplateV4_() {
   const sheet = getDatabase_().getSheetByName(JBA_CHECKLIST.templatesSheet);
   if (!sheet || sheet.getLastRow() === 0) return false;
@@ -1670,6 +1739,11 @@ function completeNativeChecklist(transactionId, actionKey, submittedItems) {
 
   if (actionKey === 'CONTRACT_CHECKLIST') {
     syncContractDetailsToTransaction_(auth.tx, checklist);
+
+    const pendingItem = checklist.items.find(item => item.itemKey === 'ABO_OR_PENDING');
+    if (pendingItem && pendingItem.value === 'Pending') {
+      sendPendingNotificationToTC_(auth.tx, checklist, auth.user);
+    }
   }
 
   if (isParallel) {

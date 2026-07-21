@@ -70,7 +70,7 @@ function seedDefaultTaskTemplates_() {
 
   if (sheet.getLastRow() === 1) {
     const rows = [
-      ['MLS_SUBMISSION_TC_ENTER', 'SELLER_LISTING', 'MLS_SUBMISSION', 10, 'Transaction Coordinator', 'Enter into MLS', '', 'Yes'],
+      ['MLS_SUBMISSION_TC_ENTER', 'SELLER_LISTING', 'MLS_SUBMISSION', 10, 'Transaction Coordinator', 'Enter into MLS', '', 'No'],
       ['MLS_SUBMISSION_MKT_SOCIAL', 'SELLER_LISTING', 'MLS_SUBMISSION', 20, 'Marketing', 'Social media graphics', '', 'Yes'],
       ['MLS_SUBMISSION_MKT_EMAIL', 'SELLER_LISTING', 'MLS_SUBMISSION', 30, 'Marketing', 'Just Listed email', '', 'Yes'],
       ['MLS_SUBMISSION_MKT_ZILLOW', 'SELLER_LISTING', 'MLS_SUBMISSION', 40, 'Marketing', 'Zillow verification', '', 'Yes'],
