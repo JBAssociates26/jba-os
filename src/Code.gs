@@ -393,11 +393,14 @@ function seedDefaultWorkflow_() {
 }
 
 /**
- * Seeds the Buyer Transaction workflow. Standalone (not folded into
- * seedDefaultWorkflow_) because that function's idempotency guard only
- * seeds when the sheet is still just a header row - the live Workflow
- * Stages/Actions sheets already have seller rows, so appending here
- * would never run there. Run once manually.
+ * Seeds the Buyer Transaction workflow: just Pending -> Closed. The TC
+ * handles inspection/financing/closing tracking in her own system for
+ * now - JBA OS's role is create the transaction (capturing everything
+ * at intake) and notify the TC; someone marks it closed manually once
+ * it's done. Standalone (not folded into seedDefaultWorkflow_) because
+ * that function's idempotency guard only seeds when the sheet is still
+ * just a header row - the live sheets already have seller rows, so
+ * appending here would never run there. Run once manually.
  */
 function seedDefaultBuyerWorkflow() {
   const ss = getDatabase_();
@@ -409,11 +412,8 @@ function seedDefaultBuyerWorkflow() {
 
   if (!existingStages.length) {
     const stages = [
-      ['BUYER_TRANSACTION', 'PENDING', 'Pending', 10, 'Yes', 'Offer accepted, TC taking over from CRM'],
-      ['BUYER_TRANSACTION', 'INSPECTION', 'Inspection', 20, 'Yes', 'Inspection scheduled and reviewed'],
-      ['BUYER_TRANSACTION', 'FINANCING', 'Financing', 30, 'Yes', 'Loan and appraisal in progress'],
-      ['BUYER_TRANSACTION', 'CLOSING', 'Closing', 40, 'Yes', 'Closing preparation'],
-      ['BUYER_TRANSACTION', 'CLOSED', 'Closed', 50, 'Yes', 'Transaction completed']
+      ['BUYER_TRANSACTION', 'PENDING', 'Pending', 10, 'Yes', 'Offer accepted, handed off to the TC'],
+      ['BUYER_TRANSACTION', 'CLOSED', 'Closed', 20, 'Yes', 'Transaction completed']
     ];
     stageSheet.getRange(stageSheet.getLastRow() + 1, 1, stages.length, 6).setValues(stages);
   }
@@ -423,14 +423,73 @@ function seedDefaultBuyerWorkflow() {
 
   if (!existingActions.length) {
     const actions = [
-      ['BUYER_TRANSACTION', 'PENDING', 'BUYER_PENDING_CHECKLIST', 'Complete Pending Checklist', 10, 'FORM', 'BUYER_PENDING', 'Transaction Coordinator', 'Yes', 'INSPECTION', 'Yes', 'Confirm deal terms and buyer details'],
-      ['BUYER_TRANSACTION', 'INSPECTION', 'BUYER_INSPECTION_CHECKLIST', 'Complete Inspection Checklist', 10, 'FORM', 'BUYER_INSPECTION', 'Transaction Coordinator', 'Yes', 'FINANCING', 'Yes', 'Track inspection results and objections'],
-      ['BUYER_TRANSACTION', 'FINANCING', 'BUYER_FINANCING_CHECKLIST', 'Complete Financing Checklist', 10, 'FORM', 'BUYER_FINANCING', 'Transaction Coordinator', 'Yes', 'CLOSING', 'Yes', 'Track lender, appraisal, and loan approval'],
-      ['BUYER_TRANSACTION', 'CLOSING', 'BUYER_CLOSING_CHECKLIST', 'Complete Closing Checklist', 10, 'FORM', 'BUYER_CLOSING', 'Transaction Coordinator', 'Yes', 'CLOSED', 'Yes', 'Finalize closing'],
-      ['BUYER_TRANSACTION', 'CLOSED', 'BUYER_POST_CLOSING', 'Post Closing', 10, 'INTERNAL', '', 'Transaction Coordinator', 'No', 'CLOSED', 'Yes', 'Close out record']
+      ['BUYER_TRANSACTION', 'PENDING', 'BUYER_POST_CLOSING', 'Mark Transaction Closed', 10, 'INTERNAL', '', 'Agent', 'No', 'CLOSED', 'Yes', 'Manually close out once the TC confirms closing']
     ];
     actionSheet.getRange(actionSheet.getLastRow() + 1, 1, actions.length, 12).setValues(actions);
   }
+}
+
+/**
+ * One-time migration: simplifies an already-seeded Buyer Transaction
+ * workflow (5 stages/4 checklists) down to the new minimal Pending ->
+ * Closed shape. Deactivates the now-unwanted stages/actions rather
+ * than deleting them (keeps history intact), then adds the new single
+ * "Mark Transaction Closed" action if it isn't already there. Safe to
+ * re-run. Run once manually if you already ran seedDefaultBuyerWorkflow
+ * / setupBuyerWorkflowChecklists before this change.
+ */
+function simplifyBuyerWorkflow() {
+  const stageSheet = getDatabase_().getSheetByName(JBA_OS.sheets.workflowStages);
+  const stageValues = stageSheet.getDataRange().getValues();
+  const stageHeaders = stageValues[0];
+  const stageKeyCol = stageHeaders.indexOf('Stage Key');
+  const stageWorkflowCol = stageHeaders.indexOf('Workflow Key');
+  const stageActiveCol = stageHeaders.indexOf('Active?');
+
+  for (let r = 1; r < stageValues.length; r++) {
+    if (
+      stageValues[r][stageWorkflowCol] === 'BUYER_TRANSACTION' &&
+      ['INSPECTION', 'FINANCING', 'CLOSING'].includes(stageValues[r][stageKeyCol])
+    ) {
+      stageSheet.getRange(r + 1, stageActiveCol + 1).setValue('No');
+    }
+  }
+
+  const actionSheet = getDatabase_().getSheetByName(JBA_OS.sheets.workflowActions);
+  const actionValues = actionSheet.getDataRange().getValues();
+  const actionHeaders = actionValues[0];
+  const actionKeyCol = actionHeaders.indexOf('Action Key');
+  const actionWorkflowCol = actionHeaders.indexOf('Workflow Key');
+  const actionActiveCol = actionHeaders.indexOf('Active?');
+
+  const oldActionKeys = [
+    'BUYER_PENDING_CHECKLIST',
+    'BUYER_INSPECTION_CHECKLIST',
+    'BUYER_FINANCING_CHECKLIST',
+    'BUYER_CLOSING_CHECKLIST'
+  ];
+
+  let hasNewAction = false;
+
+  for (let r = 1; r < actionValues.length; r++) {
+    if (actionValues[r][actionWorkflowCol] !== 'BUYER_TRANSACTION') continue;
+
+    if (oldActionKeys.includes(actionValues[r][actionKeyCol])) {
+      actionSheet.getRange(r + 1, actionActiveCol + 1).setValue('No');
+    }
+
+    if (actionValues[r][actionKeyCol] === 'BUYER_POST_CLOSING') {
+      hasNewAction = true;
+    }
+  }
+
+  if (!hasNewAction) {
+    actionSheet.getRange(actionSheet.getLastRow() + 1, 1, 1, 12).setValues([
+      ['BUYER_TRANSACTION', 'PENDING', 'BUYER_POST_CLOSING', 'Mark Transaction Closed', 10, 'INTERNAL', '', 'Agent', 'No', 'CLOSED', 'Yes', 'Manually close out once the TC confirms closing']
+    ]);
+  }
+
+  console.log('Buyer workflow simplified to Pending -> Closed.');
 }
 
 /* =========================================================

@@ -1785,8 +1785,7 @@
     const POST_CLOSING_ACTION_KEYS = ["ARCHIVE", "BUYER_POST_CLOSING"];
 
     const NATIVE_CHECKLIST_ACTION_KEYS = [
-      "PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST",
-      "BUYER_PENDING_CHECKLIST", "BUYER_INSPECTION_CHECKLIST", "BUYER_FINANCING_CHECKLIST", "BUYER_CLOSING_CHECKLIST"
+      "PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST"
     ];
 
     function actionButtonLabel(actionKey, actionName) {
@@ -2035,9 +2034,6 @@
 
     const BUYER_WORKFLOW_MILESTONES = [
       { label: "Pending", stageKeys: ["PENDING"] },
-      { label: "Inspection", stageKeys: ["INSPECTION"] },
-      { label: "Financing", stageKeys: ["FINANCING"] },
-      { label: "Closing", stageKeys: ["CLOSING"] },
       { label: "Closed", stageKeys: ["CLOSED"] }
     ];
 
