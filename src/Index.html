@@ -1591,6 +1591,11 @@
       );
     }
 
+    function actionButtonLabel(actionKey, actionName) {
+      if (actionKey === "ARCHIVE") return "Close Transaction";
+      return actionName || "Complete";
+    }
+
     function renderActionButton(item) {
       if (item.currentActionKey === "RECORD_OUTCOME" && item.canCompleteInternalAction) {
         return renderOutcomeButtons(item.transactionId);
@@ -1603,7 +1608,9 @@
         return (
           '<button class="primary" onclick="openNativeChecklist(\'' +
           escapeJs(item.transactionId) +
-          '\')">Open Checklist</button>'
+          '\')">' +
+          escapeHtml(actionButtonLabel(item.currentActionKey, item.currentActionName)) +
+          "</button>"
         );
       }
 
@@ -1616,13 +1623,13 @@
       }
 
       if (item.canCompleteInternalAction) {
-        const label = item.currentActionKey === "ARCHIVE" ? "Close Transaction" : "Mark Complete";
+        const label = actionButtonLabel(item.currentActionKey, item.currentActionName);
         return (
           '<button class="primary" onclick="completeInternal(\'' +
           escapeJs(item.transactionId) +
           "', '" +
           escapeJs(item.currentActionKey) +
-          "', this)\">" + label + "</button>"
+          "', this)\">" + escapeHtml(label) + "</button>"
         );
       }
 
@@ -1753,6 +1760,42 @@
       }
     }
 
+    const WORKFLOW_MILESTONES = [
+      { label: "Pre-Listing", stageKeys: ["PRE_LISTING"] },
+      { label: "Listing Appointment", stageKeys: ["APPOINTMENT"] },
+      { label: "Photography", stageKeys: ["LISTING_SECURED", "PHOTOS"] },
+      { label: "MLS Submission", stageKeys: ["MLS_PREP"] },
+      { label: "Live", stageKeys: ["READY_LIVE", "LIVE"] },
+      { label: "Pending", stageKeys: ["UNDER_CONTRACT"] },
+      { label: "Closing", stageKeys: ["CLOSING"] },
+      { label: "Closed", stageKeys: ["CLOSED"] }
+    ];
+
+    function renderWorkflowMilestones(currentStageKey) {
+      const currentIndex = WORKFLOW_MILESTONES.findIndex(function (m) {
+        return m.stageKeys.includes(currentStageKey);
+      });
+
+      return WORKFLOW_MILESTONES.map(function (milestone, index) {
+        let icon = "○";
+        let style = "color:var(--muted);";
+
+        if (currentIndex !== -1 && index < currentIndex) {
+          icon = "✓";
+          style = "color:var(--success);font-weight:700;";
+        } else if (index === currentIndex) {
+          icon = "●";
+          style = "color:var(--gold);font-weight:700;";
+        }
+
+        return (
+          '<div style="padding:5px 0;' + style + '">' +
+            icon + " " + escapeHtml(milestone.label) +
+          "</div>"
+        );
+      }).join("");
+    }
+
     function renderTransactionWorkspace(data) {
       document.getElementById(
         "workspaceHeaderAddress"
@@ -1844,36 +1887,28 @@
 
           '<div class="workspace-section">' +
             '<div class="workspace-section-title">' +
-              "Key Details" +
+              "Upcoming Workflow" +
             "</div>" +
 
-            renderDetailList([
-              [
-                "Appointment",
-                data.appointment.display ||
-                "Not scheduled"
-              ],
-              [
-                "Urgency",
-                data.listingDetails.urgency ||
-                "Normal"
-              ],
-              [
-                "Binder Needed",
-                data.listingDetails.binderNeeded ||
-                "Not specified"
-              ],
-              [
-                "Binder Status",
-                data.listingDetails.binderStatus ||
-                "Not started"
-              ],
-              [
-                "Last Updated",
-                data.listingDetails.updatedAt ||
-                "Not available"
-              ]
-            ]) +
+            '<div class="detail-label">Current stage</div>' +
+            '<div style="font-size:18px;font-weight:700;margin-bottom:14px;">' +
+              escapeHtml(data.workflow.currentStageName || "No stage") +
+            "</div>" +
+
+            '<div class="detail-label">Next step</div>' +
+            '<div style="font-weight:700;">' +
+              escapeHtml(data.workflow.currentActionName || "No action configured") +
+            "</div>" +
+            '<div style="color:var(--muted);margin-top:4px;margin-bottom:14px;">' +
+              "Assigned to: " + escapeHtml(data.workflow.assignedRole || "Not assigned") +
+            "</div>" +
+
+            actionButtons +
+
+            '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">' +
+              '<div class="detail-label" style="margin-bottom:8px;">Upcoming workflow</div>' +
+              renderWorkflowMilestones(data.workflow.currentStageKey) +
+            "</div>" +
           "</div>" +
 
         "</div>" +
@@ -1960,6 +1995,40 @@
                 "TC",
                 data.team.transactionCoordinatorEmail ||
                 "Not assigned"
+              ]
+            ]) +
+          "</div>" +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Key Details" +
+            "</div>" +
+
+            renderDetailList([
+              [
+                "Appointment",
+                data.appointment.display ||
+                "Not scheduled"
+              ],
+              [
+                "Urgency",
+                data.listingDetails.urgency ||
+                "Normal"
+              ],
+              [
+                "Binder Needed",
+                data.listingDetails.binderNeeded ||
+                "Not specified"
+              ],
+              [
+                "Binder Status",
+                data.listingDetails.binderStatus ||
+                "Not started"
+              ],
+              [
+                "Last Updated",
+                data.listingDetails.updatedAt ||
+                "Not available"
               ]
             ]) +
           "</div>" +
@@ -2226,7 +2295,7 @@
               'onclick="openNativeChecklist(\'' +
               escapeJs(data.transactionId) +
               '\')">' +
-              "Open Checklist" +
+              escapeHtml(actionButtonLabel(data.workflow.currentActionKey, data.workflow.currentActionName)) +
             "</button>" +
           "</div>"
         );
@@ -2248,9 +2317,9 @@
       if (
         data.permissions.canCompleteInternalAction
       ) {
-        const workspaceLabel = data.workflow.currentActionKey === "ARCHIVE"
-          ? "Close Transaction"
-          : "Mark Current Task Complete";
+        const workspaceLabel = escapeHtml(
+          actionButtonLabel(data.workflow.currentActionKey, data.workflow.currentActionName)
+        );
         return (
           '<div class="workspace-button-row">' +
             '<button class="primary" ' +
