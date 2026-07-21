@@ -2403,7 +2403,20 @@
       );
     }
 
-    function renderActivityList(activity) {
+    const NOISY_ACTIVITY_TYPES = [
+      "PORTAL_OPENED",
+      "TRANSACTION_WORKSPACE_OPENED",
+      "FORM_OPENED",
+      "ACCESS_DENIED",
+      "CHECKLIST_PROGRESS_SAVED",
+      "PARALLEL_ACTION_ROUTED"
+    ];
+
+    function renderActivityList(rawActivity) {
+      const activity = rawActivity.filter(function (item) {
+        return !NOISY_ACTIVITY_TYPES.includes(item.action);
+      });
+
       if (!activity.length) {
         return (
           '<div class="meta">' +
