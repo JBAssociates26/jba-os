@@ -1130,3 +1130,20 @@ function testJBAOSAccess() {
   console.log(`Role: ${user.role}`);
   console.log(`Accessible transactions: ${count}`);
 }
+
+/**
+ * One-off testing utility: resets a transaction back to "Post Closing
+ * pending" (Stage: CLOSED, Action: ARCHIVE, Status: Active) so the
+ * closing flow can be tested again. Safe to delete once no longer needed.
+ */
+function resetTransactionToPostClosing_ManualTest() {
+  const transactionId = 'JBA-20260720-95216935';
+
+  updateTransactionFields_(transactionId, {
+    'Status': 'Active',
+    'Current Action Key': 'ARCHIVE',
+    'Current Action Name': 'Post Closing'
+  });
+
+  console.log(`Reset ${transactionId} to Post Closing pending.`);
+}
