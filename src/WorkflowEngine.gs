@@ -192,15 +192,12 @@ function setTransactionCurrentAction_(transactionId, tx, actionKey) {
   const updates = {
     'Current Action Key': actionKey,
     'Current Action Name': action['Action Name'] || actionKey,
-    'Current Assigned Role': action['Assigned Role'] || '',
-    'Updated At': new Date(),
-    'Updated By': Session.getActiveUser().getEmail() || ''
+    'Updated At': new Date()
   };
 
   Object.keys(updates).forEach(header => {
     const columnIndex = headers.indexOf(header);
 
-    // Some installations may not yet have every optional audit column.
     if (columnIndex >= 0) {
       sheet.getRange(rowIndex + 2, columnIndex + 1)
         .setValue(updates[header]);
