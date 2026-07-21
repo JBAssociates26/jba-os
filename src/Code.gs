@@ -181,6 +181,7 @@ function setupTransactions_(ss) {
     'Closing Date',
     'MLS Status',
     'Follow-Up Flag',
+    'Archive Reason',
     'Needs Review?',
     'Review Reasons',
     'Urgency',
@@ -639,6 +640,7 @@ function recordListingAppointmentOutcome(transactionId, outcome, notes) {
     updateTransactionFields_(transactionId, {
       'Status': 'Lost',
       'Follow-Up Flag': '',
+      'Archive Reason': notes || 'Lost Listing',
       'Updated At': new Date(),
       'Last Action By': auth.user.email
     });

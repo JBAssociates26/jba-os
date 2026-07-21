@@ -1796,6 +1796,16 @@
       }).join("");
     }
 
+    function workflowMilestoneStageLabel(currentStageKey) {
+      const currentIndex = WORKFLOW_MILESTONES.findIndex(function (m) {
+        return m.stageKeys.includes(currentStageKey);
+      });
+
+      if (currentIndex === -1) return "";
+
+      return "Stage " + (currentIndex + 1) + " of " + WORKFLOW_MILESTONES.length;
+    }
+
     function renderTransactionWorkspace(data) {
       document.getElementById(
         "workspaceHeaderAddress"
@@ -1838,51 +1848,61 @@
         '<div class="workspace-summary">' +
 
           '<div class="workspace-section">' +
-            '<div class="workspace-stage-row">' +
-              '<div class="workspace-section-title" style="margin-bottom:0;">' +
-                "Overall Progress" +
-              "</div>" +
-
-              '<div class="stage">' +
-                escapeHtml(data.status || "") +
-              "</div>" +
+            '<div class="workspace-section-title">' +
+              "Activity" +
             "</div>" +
 
-            '<div class="workspace-progress-track" style="margin-top:14px;">' +
-              '<div class="workspace-progress-fill" ' +
-                'style="width:' +
-                Number(data.workflow.progressPercent || 0) +
-                '%"></div>' +
-            "</div>" +
-
-            '<div class="workspace-progress-label">' +
-              Number(data.workflow.progressPercent || 0) +
-              "% workflow progress" +
-            "</div>" +
+            renderActivityList(data.activity || []) +
           "</div>" +
 
           '<div class="workspace-section">' +
-            '<div class="workspace-section-title">' +
-              "Upcoming Workflow" +
+            '<div class="workspace-stage-row">' +
+              '<div class="workspace-section-title" style="margin-bottom:0;">' +
+                "Workflow Progress" +
+              "</div>" +
+
+              '<div class="stage">' +
+                escapeHtml(
+                  workflowMilestoneStageLabel(data.workflow.currentStageKey)
+                ) +
+              "</div>" +
             "</div>" +
 
-            '<div class="detail-label">Current stage</div>' +
+            '<div class="detail-label" style="margin-top:14px;">Current stage</div>' +
             '<div style="font-size:18px;font-weight:700;margin-bottom:14px;">' +
               escapeHtml(data.workflow.currentStageName || "No stage") +
             "</div>" +
 
-            '<div class="detail-label">Next step</div>' +
-            '<div style="font-weight:700;">' +
-              escapeHtml(data.workflow.currentActionName || "No action configured") +
-            "</div>" +
-            '<div style="color:var(--muted);margin-top:4px;margin-bottom:14px;">' +
-              "Assigned to: " + escapeHtml(data.workflow.assignedRole || "Not assigned") +
-            "</div>" +
+            (
+              data.status === "Lost"
+                ? (
+                    '<div class="detail-label">Status</div>' +
+                    '<div style="font-weight:700;">Archived</div>' +
+
+                    '<div class="detail-label" style="margin-top:10px;">Reason</div>' +
+                    '<div>' + escapeHtml(data.listingDetails.archiveReason || "Not specified") + "</div>" +
+
+                    '<div class="detail-label" style="margin-top:10px;">Archived By</div>' +
+                    '<div>' + escapeHtml(data.listingDetails.lastActionBy || "Not available") + "</div>" +
+
+                    '<div class="detail-label" style="margin-top:10px;margin-bottom:14px;">Archived</div>' +
+                    '<div>' + escapeHtml(data.listingDetails.updatedAt || "Not available") + "</div>"
+                  )
+                : (
+                    '<div class="detail-label">Next step</div>' +
+                    '<div style="font-weight:700;">' +
+                      escapeHtml(data.workflow.currentActionName || "No action configured") +
+                    "</div>" +
+                    '<div style="color:var(--muted);margin-top:4px;margin-bottom:14px;">' +
+                      "Assigned to: " + escapeHtml(data.workflow.assignedRole || "Not assigned") +
+                    "</div>"
+                  )
+            ) +
 
             actionButtons +
 
             '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">' +
-              '<div class="detail-label" style="margin-bottom:8px;">Upcoming workflow</div>' +
+              '<div class="detail-label" style="margin-bottom:8px;">Workflow Progress</div>' +
               renderWorkflowMilestones(data.workflow.currentStageKey) +
             "</div>" +
           "</div>" +
@@ -2022,16 +2042,6 @@
 
             renderWorkflowTimeline(
               data.workflow.timeline || []
-            ) +
-          "</div>" +
-
-          '<div class="workspace-section">' +
-            '<div class="workspace-section-title">' +
-              "Recent Activity" +
-            "</div>" +
-
-            renderActivityList(
-              data.activity || []
             ) +
           "</div>" +
 

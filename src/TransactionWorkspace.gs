@@ -170,7 +170,9 @@ function getTransactionWorkspace(transactionId) {
       createdAt: tx['Created At'] || '',
       updatedAt: tx['Updated At'] || '',
       lastActionBy:
-        tx['Last Action By'] || ''
+        tx['Last Action By'] || '',
+      archiveReason:
+        tx['Archive Reason'] || ''
     },
 
     permissions: {
