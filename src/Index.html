@@ -1527,8 +1527,15 @@
               "</div>" +
             "</div>" +
 
-            '<div class="stage">' +
-              escapeHtml(item.currentStageName || "") +
+            '<div style="display:flex;gap:6px;">' +
+              '<div class="stage">' +
+                escapeHtml(item.currentStageName || "") +
+              "</div>" +
+              (
+                item.mlsStatus
+                  ? '<div class="stage">' + escapeHtml(item.mlsStatus) + "</div>"
+                  : ""
+              ) +
             "</div>" +
           "</div>" +
 

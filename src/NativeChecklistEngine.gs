@@ -473,7 +473,8 @@ function syncContractDetailsToTransaction_(tx, checklist) {
 
   updateTransactionFields_(tx['Transaction ID'], {
     'Contract Price': values['TRANSACTION_AMOUNT'] || '',
-    'Closing Date': values['FORECASTED_CLOSED_DATE'] || ''
+    'Closing Date': values['FORECASTED_CLOSED_DATE'] || '',
+    'MLS Status': values['ABO_OR_PENDING'] || ''
   });
 }
 
