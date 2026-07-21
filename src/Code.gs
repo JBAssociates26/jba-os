@@ -614,6 +614,8 @@ function canUserPerformAction_(user, action) {
    ========================================================= */
 
 function getCurrentActionForTransaction_(tx) {
+  if (tx['Status'] === 'Closed') return null;
+
   const workflowKey = tx['Workflow Key'];
   const stageKey = tx['Current Stage Key'];
 
