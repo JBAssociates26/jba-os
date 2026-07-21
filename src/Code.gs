@@ -371,7 +371,7 @@ function seedDefaultWorkflow_() {
       ['SELLER_LISTING', 'LIVE', 'ACCEPTED_OFFER', 'Record Accepted Offer', 20, 'FORM', 'UNDER_CONTRACT', 'Agent', 'Yes', 'UNDER_CONTRACT', 'Yes', 'Start transaction coordination'],
       ['SELLER_LISTING', 'UNDER_CONTRACT', 'CONTRACT_CHECKLIST', 'Complete Under Contract Checklist', 10, 'FORM', 'UNDER_CONTRACT', 'Transaction Coordinator', 'Yes', 'CLOSING', 'Yes', 'Track contract-to-close'],
       ['SELLER_LISTING', 'CLOSING', 'CLOSING_CHECKLIST', 'Complete Closing Checklist', 10, 'FORM', 'CLOSING', 'Transaction Coordinator', 'Yes', 'CLOSED', 'Yes', 'Finalize closing'],
-      ['SELLER_LISTING', 'CLOSED', 'ARCHIVE', 'Archive Transaction', 10, 'INTERNAL', '', 'Operations Admin', 'No', 'CLOSED', 'Yes', 'Close out record']
+      ['SELLER_LISTING', 'CLOSED', 'ARCHIVE', 'Post Closing', 10, 'INTERNAL', '', 'Transaction Coordinator', 'No', 'CLOSED', 'Yes', 'Close out record']
     ];
     actionSheet.getRange(2, 1, actions.length, 12).setValues(actions);
   }
