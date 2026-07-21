@@ -392,6 +392,47 @@ function seedDefaultWorkflow_() {
   }
 }
 
+/**
+ * Seeds the Buyer Transaction workflow. Standalone (not folded into
+ * seedDefaultWorkflow_) because that function's idempotency guard only
+ * seeds when the sheet is still just a header row - the live Workflow
+ * Stages/Actions sheets already have seller rows, so appending here
+ * would never run there. Run once manually.
+ */
+function seedDefaultBuyerWorkflow_() {
+  const ss = getDatabase_();
+  const stageSheet = ss.getSheetByName(JBA_OS.sheets.workflowStages);
+  const actionSheet = ss.getSheetByName(JBA_OS.sheets.workflowActions);
+
+  const existingStages = sheetObjects_(JBA_OS.sheets.workflowStages)
+    .filter(row => row['Workflow Key'] === 'BUYER_TRANSACTION');
+
+  if (!existingStages.length) {
+    const stages = [
+      ['BUYER_TRANSACTION', 'PENDING', 'Pending', 10, 'Yes', 'Offer accepted, TC taking over from CRM'],
+      ['BUYER_TRANSACTION', 'INSPECTION', 'Inspection', 20, 'Yes', 'Inspection scheduled and reviewed'],
+      ['BUYER_TRANSACTION', 'FINANCING', 'Financing', 30, 'Yes', 'Loan and appraisal in progress'],
+      ['BUYER_TRANSACTION', 'CLOSING', 'Closing', 40, 'Yes', 'Closing preparation'],
+      ['BUYER_TRANSACTION', 'CLOSED', 'Closed', 50, 'Yes', 'Transaction completed']
+    ];
+    stageSheet.getRange(stageSheet.getLastRow() + 1, 1, stages.length, 6).setValues(stages);
+  }
+
+  const existingActions = sheetObjects_(JBA_OS.sheets.workflowActions)
+    .filter(row => row['Workflow Key'] === 'BUYER_TRANSACTION');
+
+  if (!existingActions.length) {
+    const actions = [
+      ['BUYER_TRANSACTION', 'PENDING', 'BUYER_PENDING_CHECKLIST', 'Complete Pending Checklist', 10, 'FORM', 'BUYER_PENDING', 'Transaction Coordinator', 'Yes', 'INSPECTION', 'Yes', 'Confirm deal terms and buyer details'],
+      ['BUYER_TRANSACTION', 'INSPECTION', 'BUYER_INSPECTION_CHECKLIST', 'Complete Inspection Checklist', 10, 'FORM', 'BUYER_INSPECTION', 'Transaction Coordinator', 'Yes', 'FINANCING', 'Yes', 'Track inspection results and objections'],
+      ['BUYER_TRANSACTION', 'FINANCING', 'BUYER_FINANCING_CHECKLIST', 'Complete Financing Checklist', 10, 'FORM', 'BUYER_FINANCING', 'Transaction Coordinator', 'Yes', 'CLOSING', 'Yes', 'Track lender, appraisal, and loan approval'],
+      ['BUYER_TRANSACTION', 'CLOSING', 'BUYER_CLOSING_CHECKLIST', 'Complete Closing Checklist', 10, 'FORM', 'BUYER_CLOSING', 'Transaction Coordinator', 'Yes', 'CLOSED', 'Yes', 'Finalize closing'],
+      ['BUYER_TRANSACTION', 'CLOSED', 'BUYER_POST_CLOSING', 'Post Closing', 10, 'INTERNAL', '', 'Transaction Coordinator', 'No', 'CLOSED', 'Yes', 'Close out record']
+    ];
+    actionSheet.getRange(actionSheet.getLastRow() + 1, 1, actions.length, 12).setValues(actions);
+  }
+}
+
 /* =========================================================
    AUTHORIZATION
    ========================================================= */
@@ -987,6 +1028,86 @@ function createSellerListingTransaction(payload) {
     'Urgency': payload.urgency || '',
     'Binder Needed?': payload.binderNeeded || '',
     'Binder Status': payload.binderStatus || '',
+    'Notes': payload.notes || '',
+    'Last Action By': user.email,
+    'Source System': payload.sourceSystem || 'JBA OS',
+    'Source Record ID': payload.sourceRecordId || ''
+  };
+
+  appendObject_(JBA_OS.sheets.transactions, row);
+
+  logActivity_(
+    user,
+    transactionId,
+    'TRANSACTION_CREATED',
+    '',
+    stage['Stage Name'],
+    '',
+    action ? action['Action Name'] : '',
+    row['Property Address']
+  );
+
+  return {
+    success: true,
+    transactionId: transactionId
+  };
+}
+
+/**
+ * Creates a Buyer transaction starting at Pending - the CRM owns the
+ * relationship up through an accepted offer; JBA OS takes over from
+ * here. Mirrors createSellerListingTransaction's shape and reuses the
+ * same generic Transaction fields (Client First/Last/Email/Phone here
+ * mean the buyer; Listing Agent/Agent Email mean the agent representing
+ * the buyer).
+ */
+function createBuyerTransaction(payload) {
+  const user = requireUser_();
+
+  if (!['Executive Admin', 'Operations Admin', 'Agent'].includes(user.role)) {
+    throw new Error('You are not authorized to create transactions.');
+  }
+
+  const transactionId =
+    payload.transactionId ||
+    createTransactionId_();
+
+  const stage = getStage_('BUYER_TRANSACTION', 'PENDING');
+  const action = getFirstActionForStage_('BUYER_TRANSACTION', 'PENDING');
+
+  if (!stage) {
+    throw new Error('Buyer Transaction workflow is not configured. Run seedDefaultBuyerWorkflow_() first.');
+  }
+
+  const row = {
+    'Transaction ID': transactionId,
+    'Created At': new Date(),
+    'Updated At': new Date(),
+    'Status': 'Active',
+    'Workflow Key': 'BUYER_TRANSACTION',
+    'Current Stage Key': stage['Stage Key'],
+    'Current Stage Name': stage['Stage Name'],
+    'Current Action Key': action ? action['Action Key'] : '',
+    'Current Action Name': action ? action['Action Name'] : '',
+    'Listing Agent': payload.agentName || user.displayName,
+    'Agent Email': normalizeEmail_(payload.agentEmail || user.agentEmailMatch || user.email),
+    'Assigned Operations Email': normalizeEmail_(payload.assignedOperationsEmail || getSetting_('Default Operations Email')),
+    'Assigned Marketing Email': normalizeEmail_(payload.assignedMarketingEmail || getSetting_('Default Marketing Email')),
+    'Assigned TC Email': normalizeEmail_(payload.assignedTCEmail),
+    'Client First Name': payload.buyerFirstName || '',
+    'Client Last Name': payload.buyerLastName || '',
+    'Client Email': payload.buyerEmail || '',
+    'Client Phone': payload.buyerPhone || '',
+    'Property Address': payload.propertyAddress || '',
+    'Address Line 1': payload.addressLine1 || payload.propertyAddress || '',
+    'Address Line 2': payload.addressLine2 || '',
+    'City': payload.city || '',
+    'State': payload.state || 'MI',
+    'Postal Code': payload.postalCode || '',
+    'County': payload.county || '',
+    'Property Type': payload.propertyType || '',
+    'Contract Price': payload.contractPrice || '',
+    'Closing Date': payload.closingDate || '',
     'Notes': payload.notes || '',
     'Last Action By': user.email,
     'Source System': payload.sourceSystem || 'JBA OS',

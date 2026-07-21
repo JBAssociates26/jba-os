@@ -1086,6 +1086,14 @@
         >
           + New Listing
         </button>
+
+        <button
+          id="newBuyerButton"
+          class="primary"
+          onclick="openBuyerWizard()"
+        >
+          + New Buyer Transaction
+        </button>
       </div>
     </div>
 
@@ -1445,6 +1453,73 @@
     </div>
   </div>
 
+  <div
+    id="buyerWizardBackdrop"
+    class="modal-backdrop"
+    onclick="closeBuyerWizardFromBackdrop(event)"
+  >
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">New Buyer Transaction</div>
+          <div class="subtitle">Offer accepted — JBA OS takes over from here, starting at Pending.</div>
+        </div>
+        <button class="close" onclick="closeBuyerWizard()">&times;</button>
+      </div>
+
+      <form onsubmit="submitBuyerWizard(event)" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+        <div id="buyerWizardError" style="color:#b3261e;font-size:13px;display:none;"></div>
+
+        <div class="detail-label">Buyer</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <input id="buyerFirstName" placeholder="First name" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+          <input id="buyerLastName" placeholder="Last name" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <input id="buyerEmail" type="email" placeholder="Email" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+          <input id="buyerPhone" placeholder="Phone" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+
+        <div class="detail-label">Property Under Contract</div>
+        <input id="buyerPropertyAddress" placeholder="Property address" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;">
+          <input id="buyerCity" placeholder="City" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+          <select id="buyerState" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+            <option value="MI">MI</option>
+          </select>
+          <input id="buyerPostalCode" placeholder="ZIP" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <select id="buyerCounty" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;"></select>
+          <select id="buyerPropertyType" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;"></select>
+        </div>
+
+        <div class="detail-label">Deal Terms</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <input id="buyerContractPrice" placeholder="Contract price" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+          <input id="buyerClosingDate" type="date" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        </div>
+
+        <div class="detail-label">Assigned Team</div>
+        <select id="buyerAgentEmail" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;"></select>
+        <select id="buyerTCEmail" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+          <option value="">No Transaction Coordinator assigned</option>
+        </select>
+        <select id="buyerMarketingEmail" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+          <option value="">No Marketing assigned</option>
+        </select>
+
+        <div class="detail-label">Notes</div>
+        <textarea id="buyerNotes" rows="3" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;"></textarea>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+          <button type="button" class="secondary" onclick="closeBuyerWizard()">Cancel</button>
+          <button type="submit" class="primary" id="buyerWizardSubmit">Create Buyer Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let portalData = null;
     let wizardOptions = null;
@@ -1613,6 +1688,9 @@
             "</div>" +
 
             '<div style="display:flex;gap:6px;">' +
+              '<div class="stage" style="background:#eef1f5;color:#3a4a5c;">' +
+                (item.workflowKey === "BUYER_TRANSACTION" ? "Buyer" : "Seller") +
+              "</div>" +
               (
                 item.status === "Active"
                   ? (
@@ -1704,8 +1782,15 @@
       return "";
     }
 
+    const POST_CLOSING_ACTION_KEYS = ["ARCHIVE", "BUYER_POST_CLOSING"];
+
+    const NATIVE_CHECKLIST_ACTION_KEYS = [
+      "PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST",
+      "BUYER_PENDING_CHECKLIST", "BUYER_INSPECTION_CHECKLIST", "BUYER_FINANCING_CHECKLIST", "BUYER_CLOSING_CHECKLIST"
+    ];
+
     function actionButtonLabel(actionKey, actionName) {
-      if (actionKey === "ARCHIVE") return "Close Transaction";
+      if (POST_CLOSING_ACTION_KEYS.includes(actionKey)) return "Close Transaction";
       return actionName || "Complete";
     }
 
@@ -1723,7 +1808,7 @@
       }
 
       if (
-        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST"].includes(item.currentActionKey) &&
+        NATIVE_CHECKLIST_ACTION_KEYS.includes(item.currentActionKey) &&
         item.canOpenForm
       ) {
         return (
@@ -1874,7 +1959,7 @@
 
       google.script.run
         .withSuccessHandler(function () {
-          if (actionKey === "ARCHIVE") {
+          if (POST_CLOSING_ACTION_KEYS.includes(actionKey)) {
             alert("🎉 Congratulations on your closing!");
           }
           refreshPortalAndWorkspace(transactionId);
@@ -1937,7 +2022,7 @@
       }
     }
 
-    const WORKFLOW_MILESTONES = [
+    const SELLER_WORKFLOW_MILESTONES = [
       { label: "Pre-Listing", stageKeys: ["PRE_LISTING"] },
       { label: "Listing Appointment", stageKeys: ["APPOINTMENT"] },
       { label: "Photography", stageKeys: ["LISTING_SECURED", "PHOTOS"] },
@@ -1948,12 +2033,27 @@
       { label: "Closed", stageKeys: ["CLOSED"] }
     ];
 
-    function renderWorkflowMilestones(currentStageKey) {
-      const currentIndex = WORKFLOW_MILESTONES.findIndex(function (m) {
+    const BUYER_WORKFLOW_MILESTONES = [
+      { label: "Pending", stageKeys: ["PENDING"] },
+      { label: "Inspection", stageKeys: ["INSPECTION"] },
+      { label: "Financing", stageKeys: ["FINANCING"] },
+      { label: "Closing", stageKeys: ["CLOSING"] },
+      { label: "Closed", stageKeys: ["CLOSED"] }
+    ];
+
+    function getWorkflowMilestones_(workflowKey) {
+      return workflowKey === "BUYER_TRANSACTION"
+        ? BUYER_WORKFLOW_MILESTONES
+        : SELLER_WORKFLOW_MILESTONES;
+    }
+
+    function renderWorkflowMilestones(workflowKey, currentStageKey) {
+      const milestones = getWorkflowMilestones_(workflowKey);
+      const currentIndex = milestones.findIndex(function (m) {
         return m.stageKeys.includes(currentStageKey);
       });
 
-      return WORKFLOW_MILESTONES.map(function (milestone, index) {
+      return milestones.map(function (milestone, index) {
         let icon = "○";
         let style = "color:var(--muted);";
 
@@ -1973,14 +2073,15 @@
       }).join("");
     }
 
-    function workflowMilestoneStageLabel(currentStageKey) {
-      const currentIndex = WORKFLOW_MILESTONES.findIndex(function (m) {
+    function workflowMilestoneStageLabel(workflowKey, currentStageKey) {
+      const milestones = getWorkflowMilestones_(workflowKey);
+      const currentIndex = milestones.findIndex(function (m) {
         return m.stageKeys.includes(currentStageKey);
       });
 
       if (currentIndex === -1) return "";
 
-      return "Stage " + (currentIndex + 1) + " of " + WORKFLOW_MILESTONES.length;
+      return "Stage " + (currentIndex + 1) + " of " + milestones.length;
     }
 
     function renderCompactArchiveTimeline(timeline) {
@@ -2062,7 +2163,7 @@
 
               '<div class="stage">' +
                 escapeHtml(
-                  workflowMilestoneStageLabel(data.workflow.currentStageKey)
+                  workflowMilestoneStageLabel(data.workflow.workflowKey, data.workflow.currentStageKey)
                 ) +
               "</div>" +
             "</div>" +
@@ -2119,7 +2220,7 @@
                     )
                   : (
                       '<div class="detail-label" style="margin-bottom:8px;">Workflow Progress</div>' +
-                      renderWorkflowMilestones(data.workflow.currentStageKey)
+                      renderWorkflowMilestones(data.workflow.workflowKey, data.workflow.currentStageKey)
                     )
               ) +
             "</div>" +
@@ -2500,7 +2601,7 @@
       }
 
       if (
-        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION", "ACCEPTED_OFFER", "CONTRACT_CHECKLIST", "CLOSING_CHECKLIST"].includes(data.workflow.currentActionKey) &&
+        NATIVE_CHECKLIST_ACTION_KEYS.includes(data.workflow.currentActionKey) &&
         (
           data.permissions.canOpenForm ||
           data.permissions.canCompleteInternalAction
@@ -2605,7 +2706,7 @@
 
       google.script.run
         .withSuccessHandler(function () {
-          if (actionKey === "ARCHIVE") {
+          if (POST_CLOSING_ACTION_KEYS.includes(actionKey)) {
             alert("🎉 Congratulations on your closing!");
           }
           refreshPortalAndWorkspace(transactionId);
@@ -3536,6 +3637,124 @@
         (isError ? "error" : "success");
 
       element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    let buyerWizardOptions = null;
+
+    function openBuyerWizard() {
+      document.getElementById("buyerWizardError").style.display = "none";
+      document.getElementById("buyerWizardBackdrop").classList.add("open");
+      document.body.style.overflow = "hidden";
+
+      if (buyerWizardOptions) {
+        populateBuyerWizardOptions(buyerWizardOptions);
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (options) {
+          buyerWizardOptions = options;
+          populateBuyerWizardOptions(options);
+        })
+        .withFailureHandler(function (error) {
+          const errorEl = document.getElementById("buyerWizardError");
+          errorEl.textContent = error.message || String(error);
+          errorEl.style.display = "block";
+        })
+        .getNewBuyerWizardOptions();
+    }
+
+    function closeBuyerWizard() {
+      document.getElementById("buyerWizardBackdrop").classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function closeBuyerWizardFromBackdrop(event) {
+      if (event.target.id === "buyerWizardBackdrop") {
+        closeBuyerWizard();
+      }
+    }
+
+    function populateBuyerWizardOptions(options) {
+      const agentSelect = document.getElementById("buyerAgentEmail");
+      agentSelect.innerHTML = options.agents.map(function (agent) {
+        return '<option value="' + escapeHtml(agent.email) + '">' + escapeHtml(agent.name) + "</option>";
+      }).join("");
+
+      const tcSelect = document.getElementById("buyerTCEmail");
+      tcSelect.innerHTML = '<option value="">No Transaction Coordinator assigned</option>' +
+        options.tcUsers.map(function (tc) {
+          return '<option value="' + escapeHtml(tc.email) + '">' + escapeHtml(tc.name) + "</option>";
+        }).join("");
+
+      const marketingSelect = document.getElementById("buyerMarketingEmail");
+      marketingSelect.innerHTML = options.marketingUsers.map(function (m) {
+        return '<option value="' + escapeHtml(m.email) + '">' + escapeHtml(m.name) + "</option>";
+      }).join("") + '<option value="">No Marketing assigned</option>';
+
+      if (options.defaults.marketingEmail) {
+        marketingSelect.value = options.defaults.marketingEmail;
+      }
+
+      document.getElementById("buyerCounty").innerHTML = options.counties.map(function (c) {
+        return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + "</option>";
+      }).join("");
+
+      document.getElementById("buyerPropertyType").innerHTML = options.propertyTypes.map(function (t) {
+        return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + "</option>";
+      }).join("");
+    }
+
+    function submitBuyerWizard(event) {
+      event.preventDefault();
+
+      const errorEl = document.getElementById("buyerWizardError");
+      errorEl.style.display = "none";
+
+      const payload = {
+        buyerFirstName: document.getElementById("buyerFirstName").value.trim(),
+        buyerLastName: document.getElementById("buyerLastName").value.trim(),
+        buyerEmail: document.getElementById("buyerEmail").value.trim(),
+        buyerPhone: document.getElementById("buyerPhone").value.trim(),
+        propertyAddress: document.getElementById("buyerPropertyAddress").value.trim(),
+        city: document.getElementById("buyerCity").value.trim(),
+        state: document.getElementById("buyerState").value,
+        postalCode: document.getElementById("buyerPostalCode").value.trim(),
+        county: document.getElementById("buyerCounty").value,
+        propertyType: document.getElementById("buyerPropertyType").value,
+        contractPrice: document.getElementById("buyerContractPrice").value.trim(),
+        closingDate: document.getElementById("buyerClosingDate").value,
+        agentEmail: document.getElementById("buyerAgentEmail").value,
+        assignedTCEmail: document.getElementById("buyerTCEmail").value,
+        assignedMarketingEmail: document.getElementById("buyerMarketingEmail").value,
+        notes: document.getElementById("buyerNotes").value.trim()
+      };
+
+      const submitButton = document.getElementById("buyerWizardSubmit");
+      submitButton.disabled = true;
+      submitButton.textContent = "Creating…";
+
+      google.script.run
+        .withSuccessHandler(function () {
+          submitButton.disabled = false;
+          submitButton.textContent = "Create Buyer Transaction";
+          closeBuyerWizard();
+          document.getElementById("buyerFirstName").closest("form").reset();
+
+          google.script.run
+            .withSuccessHandler(loadPortal)
+            .withFailureHandler(function (error) {
+              alert(error.message || String(error));
+            })
+            .getPortalData();
+        })
+        .withFailureHandler(function (error) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Create Buyer Transaction";
+          errorEl.textContent = error.message || String(error);
+          errorEl.style.display = "block";
+        })
+        .createNewBuyerTransaction(payload);
     }
 
     function openWizard() {

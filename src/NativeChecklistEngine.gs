@@ -547,6 +547,166 @@ function sendPendingNotificationToTC_(tx, checklist, user) {
   );
 }
 
+/* =========================================================
+   BUYER TRANSACTION CHECKLISTS
+   Pending -> Inspection -> Financing -> Closing -> Post Closing
+
+   These are a starting draft. Since templates are config-driven,
+   adjust items directly in the Checklist Templates sheet afterward —
+   no code changes needed.
+
+   Run setupBuyerWorkflowChecklists() once. Safe to re-run.
+   ========================================================= */
+
+function setupBuyerWorkflowChecklists() {
+  seedBuyerPendingChecklistTemplate_();
+  seedBuyerInspectionChecklistTemplate_();
+  seedBuyerFinancingChecklistTemplate_();
+  seedBuyerClosingChecklistTemplate_();
+}
+
+function buyerChecklistRow_(
+  templateId, stageKey, actionKey, section, order, itemKey, label, type,
+  requiredMode, conditionalRule, options, readOnly, sourceField, helpText
+) {
+  return {
+    'Template ID': templateId,
+    'Workflow Key': 'BUYER_TRANSACTION',
+    'Stage Key': stageKey,
+    'Action Key': actionKey,
+    'Section': section,
+    'Item Order': order,
+    'Item Key': itemKey,
+    'Item Label': label,
+    'Item Type': type,
+    'Required Mode': requiredMode,
+    'Conditional Rule': conditionalRule,
+    'Options': options,
+    'Default Value': '',
+    'Read Only?': readOnly,
+    'Source Field': sourceField,
+    'Help Text': helpText,
+    'Active?': 'Yes'
+  };
+}
+
+function seedBuyerPendingChecklistTemplate_() {
+  deactivateChecklistTemplateItems_('BUYER_TRANSACTION', 'BUYER_PENDING_CHECKLIST');
+
+  const id = 'BUYER_PENDING_CHECKLIST_V1';
+  const stage = 'PENDING';
+  const action = 'BUYER_PENDING_CHECKLIST';
+
+  const rows = [
+    buyerChecklistRow_(id, stage, action, 'Buyer Details', 10, 'BUYER_NAME', 'Buyer Full Name', 'TEXT', 'YES', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Buyer Details', 20, 'BUYER_EMAIL', 'Buyer Email', 'EMAIL', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Buyer Details', 30, 'BUYER_PHONE', 'Buyer Phone', 'PHONE', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Listing Side', 40, 'LISTING_AGENT_NAME', 'Listing Agent Name', 'TEXT', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Listing Side', 50, 'LISTING_AGENT_EMAIL', 'Listing Agent Email', 'EMAIL', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Contract Terms', 60, 'TRANSACTION_AMOUNT', 'Contract Price', 'CURRENCY', 'YES', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Contract Terms', 70, 'TARGET_CLOSING_DATE', 'Target Closing Date', 'DATE', 'YES', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Contract Terms', 80, 'FINANCING_TYPE', 'Financing Type', 'SELECT', 'YES', '', 'Cash|Conventional|FHA|VA|Other', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Contract Terms', 90, 'EARNEST_MONEY_AMOUNT', 'Earnest Money Amount', 'CURRENCY', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Additional Information', 100, 'PENDING_NOTES', 'Notes', 'TEXTAREA', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Final Confirmation', 110, 'READY_FOR_INSPECTION', 'Deal details are confirmed and ready to proceed.', 'CHECKBOX', 'YES', '', '', 'No', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+function seedBuyerInspectionChecklistTemplate_() {
+  deactivateChecklistTemplateItems_('BUYER_TRANSACTION', 'BUYER_INSPECTION_CHECKLIST');
+
+  const id = 'BUYER_INSPECTION_CHECKLIST_V1';
+  const stage = 'INSPECTION';
+  const action = 'BUYER_INSPECTION_CHECKLIST';
+
+  const rows = [
+    buyerChecklistRow_(id, stage, action, 'Inspection', 10, 'INSPECTION_DATE', 'Inspection Date', 'DATE', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Inspection', 20, 'INSPECTION_TIME', 'Inspection Time', 'TIME', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Inspection', 30, 'INSPECTOR_NAME', 'Inspector Name', 'TEXT', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Inspection', 40, 'INSPECTION_CONTINGENCY_DATE', 'Inspection Contingency Date', 'DATE', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Results', 50, 'INSPECTION_RESULTS', 'Results / Objections', 'TEXTAREA', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Results', 60, 'REPAIR_REQUESTS', 'Repair Requests', 'TEXTAREA', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Results', 70, 'INSPECTION_RESOLVED', 'Resolved?', 'SELECT', 'YES', '', 'Yes|No|Not Applicable', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Additional Information', 80, 'INSPECTION_NOTES', 'Notes', 'TEXTAREA', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Final Confirmation', 90, 'READY_FOR_FINANCING', 'Inspection is resolved and ready to proceed.', 'CHECKBOX', 'YES', '', '', 'No', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+function seedBuyerFinancingChecklistTemplate_() {
+  deactivateChecklistTemplateItems_('BUYER_TRANSACTION', 'BUYER_FINANCING_CHECKLIST');
+
+  const id = 'BUYER_FINANCING_CHECKLIST_V1';
+  const stage = 'FINANCING';
+  const action = 'BUYER_FINANCING_CHECKLIST';
+
+  const rows = [
+    buyerChecklistRow_(id, stage, action, 'Lender', 10, 'LENDER_NAME', 'Lender Name', 'TEXT', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Lender', 20, 'LENDER_CONTACT', 'Lender Contact', 'TEXT', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Lender', 30, 'LOAN_TYPE', 'Loan Type', 'SELECT', 'NO', '', 'Conventional|FHA|VA|Cash|Other', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Appraisal', 40, 'APPRAISAL_ORDERED', 'Appraisal Ordered?', 'SELECT', 'YES', '', 'Yes|No', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Appraisal', 50, 'APPRAISAL_DATE', 'Appraisal Date', 'DATE', 'CONDITIONAL', 'APPRAISAL_ORDERED=Yes', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Loan Status', 60, 'FINANCING_CONTINGENCY_DATE', 'Financing Contingency Date', 'DATE', 'NO', '', '', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Loan Status', 70, 'LOAN_APPROVAL_STATUS', 'Loan Approval Status', 'SELECT', 'YES', '', 'Not Submitted|Pre-Approved|Conditionally Approved|Clear to Close', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Additional Information', 80, 'FINANCING_NOTES', 'Notes', 'TEXTAREA', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Final Confirmation', 90, 'READY_FOR_CLOSING_PREP', 'Financing is on track and ready for closing.', 'CHECKBOX', 'YES', '', '', 'No', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+function seedBuyerClosingChecklistTemplate_() {
+  deactivateChecklistTemplateItems_('BUYER_TRANSACTION', 'BUYER_CLOSING_CHECKLIST');
+
+  const id = 'BUYER_CLOSING_CHECKLIST_V1';
+  const stage = 'CLOSING';
+  const action = 'BUYER_CLOSING_CHECKLIST';
+
+  const rows = [
+    buyerChecklistRow_(id, stage, action, 'Closing Details', 10, 'CLOSING_DATE', 'Closing Date', 'DATE', 'NO', '', '', 'Yes', 'Closing Date', ''),
+    buyerChecklistRow_(id, stage, action, 'Closing Details', 20, 'TITLE_COMPANY', 'Title Company', 'TEXT', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Final Steps', 30, 'FINAL_WALKTHROUGH_COMPLETE', 'Final Walkthrough Completed?', 'SELECT', 'YES', '', 'Yes|No', 'No', '', ''),
+    buyerChecklistRow_(id, stage, action, 'Final Steps', 40, 'CLOSING_DISCLOSURE_SENT', 'Closing Disclosure Sent?', 'SELECT', 'YES', '', 'Yes|No', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Additional Information', 50, 'CLOSING_NOTES', 'Notes', 'TEXTAREA', 'NO', '', '', 'No', '', ''),
+
+    buyerChecklistRow_(id, stage, action, 'Final Confirmation', 60, 'READY_FOR_CLOSING', 'This file is ready to close.', 'CHECKBOX', 'YES', '', '', 'No', '', '')
+  ];
+
+  upsertChecklistTemplateRows_(rows);
+}
+
+/**
+ * Writes the Pending checklist's contract price / target closing date
+ * onto the transaction row so later checklists can display the closing
+ * date read-only via Source Field - same pattern as
+ * syncContractDetailsToTransaction_ on the seller side.
+ */
+function syncBuyerPendingDetailsToTransaction_(tx, checklist) {
+  const values = {};
+  checklist.items.forEach(item => values[item.itemKey] = item.value || '');
+
+  updateTransactionFields_(tx['Transaction ID'], {
+    'Contract Price': values['TRANSACTION_AMOUNT'] || '',
+    'Closing Date': values['TARGET_CLOSING_DATE'] || ''
+  });
+}
+
 function isChecklistTemplateV4_() {
   const sheet = getDatabase_().getSheetByName(JBA_CHECKLIST.templatesSheet);
   if (!sheet || sheet.getLastRow() === 0) return false;
@@ -1744,6 +1904,10 @@ function completeNativeChecklist(transactionId, actionKey, submittedItems) {
     if (pendingItem && pendingItem.value === 'Pending') {
       sendPendingNotificationToTC_(auth.tx, checklist, auth.user);
     }
+  }
+
+  if (actionKey === 'BUYER_PENDING_CHECKLIST') {
+    syncBuyerPendingDetailsToTransaction_(auth.tx, checklist);
   }
 
   if (isParallel) {
