@@ -505,7 +505,9 @@ function getPortalData() {
       canReassign: user.canReassign
     },
     stats: calculateStats_(transactions),
-    transactions: transactions.map(tx => toClientTransaction_(tx, user))
+    transactions: transactions
+      .filter(tx => tx['Status'] !== 'Closed')
+      .map(tx => toClientTransaction_(tx, user))
   };
 }
 
