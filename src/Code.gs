@@ -678,6 +678,8 @@ function advanceTransaction_(user, tx, action, details) {
     nextAction ? nextAction['Action Name'] : ''
   );
 
+  createTasksForAction_(user, tx, action['Action Key']);
+
   return {
     success: true,
     transactionId: tx['Transaction ID'],

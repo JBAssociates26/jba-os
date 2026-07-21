@@ -1434,10 +1434,12 @@ function completeNativeChecklist(transactionId, actionKey, submittedItems) {
   if (actionKey === 'MLS_SUBMISSION') {
     validateMlsConditionalRequirements_(checklist);
     sendMlsSubmissionNotificationToTC_(auth.tx, checklist, auth.user);
+    createTasksForAction_(auth.user, auth.tx, actionKey);
   }
 
   if (actionKey === 'PHOTO_ORDER') {
     sendPhotoOrderNotificationToTC_(auth.tx, checklist, auth.user);
+    createTasksForAction_(auth.user, auth.tx, actionKey);
   }
 
   if (isParallel) {

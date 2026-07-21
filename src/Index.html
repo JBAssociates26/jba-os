@@ -1040,6 +1040,14 @@
         >
 
         <button
+          id="myTasksButton"
+          class="secondary"
+          onclick="openMyTasks()"
+        >
+          My Tasks
+        </button>
+
+        <button
           id="newListingButton"
           class="primary"
           onclick="openWizard()"
@@ -1308,6 +1316,32 @@
         <button id="completeChecklistButton" class="primary" onclick="saveChecklist(true)">
           Complete Checklist
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="tasksOverlay"
+    class="checklist-overlay"
+    onclick="closeTasksFromBackdrop(event)"
+  >
+    <div class="checklist-modal">
+      <div class="checklist-header">
+        <div>
+          <div class="subtitle">JBA OS</div>
+          <div class="checklist-title">My Tasks</div>
+          <div class="checklist-context">Open tasks assigned to your role.</div>
+        </div>
+
+        <button class="close" onclick="closeMyTasks()">&times;</button>
+      </div>
+
+      <div id="tasksBody" class="checklist-body">
+        <div class="workspace-loading">Loading tasks…</div>
+      </div>
+
+      <div class="checklist-actions">
+        <button class="secondary" onclick="closeMyTasks()">Close</button>
       </div>
     </div>
   </div>
@@ -2324,6 +2358,80 @@
       if (event.target.id === "checklistOverlay") {
         closeNativeChecklist();
       }
+    }
+
+    function openMyTasks() {
+      const overlay = document.getElementById("tasksOverlay");
+
+      document.getElementById("tasksBody").innerHTML =
+        '<div class="workspace-loading">Loading tasks…</div>';
+
+      overlay.classList.add("open");
+      document.body.style.overflow = "hidden";
+
+      google.script.run
+        .withSuccessHandler(renderMyTasks)
+        .withFailureHandler(function (error) {
+          document.getElementById("tasksBody").innerHTML =
+            '<div class="workspace-error">' +
+              escapeHtml(error.message || String(error)) +
+            "</div>";
+        })
+        .getMyTasks();
+    }
+
+    function closeMyTasks() {
+      document.getElementById("tasksOverlay").classList.remove("open");
+
+      if (
+        document.getElementById("workspaceBackdrop").classList.contains("open")
+      ) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
+    }
+
+    function closeTasksFromBackdrop(event) {
+      if (event.target.id === "tasksOverlay") {
+        closeMyTasks();
+      }
+    }
+
+    function renderMyTasks(tasks) {
+      if (!tasks || !tasks.length) {
+        document.getElementById("tasksBody").innerHTML =
+          '<div class="message">No open tasks.</div>';
+        return;
+      }
+
+      document.getElementById("tasksBody").innerHTML = tasks.map(function (task) {
+        return (
+          '<div class="checklist-item" style="display:flex;justify-content:space-between;align-items:center;gap:16px;">' +
+            '<div>' +
+              '<strong>' + escapeHtml(task.taskName) + '</strong><br>' +
+              '<span class="checklist-context">' +
+                escapeHtml(task.propertyAddress || task.transactionId) +
+                ' — ' + escapeHtml(task.role) +
+              '</span>' +
+            '</div>' +
+            '<button class="primary" onclick="completeMyTask(\'' +
+              escapeJs(task.taskId) +
+            '\')">Mark Complete</button>' +
+          '</div>'
+        );
+      }).join("");
+    }
+
+    function completeMyTask(taskId) {
+      google.script.run
+        .withSuccessHandler(function () {
+          openMyTasks();
+        })
+        .withFailureHandler(function (error) {
+          alert(error.message || String(error));
+        })
+        .completeTask(taskId);
     }
 
     function renderNativeChecklist(data) {
