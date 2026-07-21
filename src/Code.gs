@@ -182,6 +182,7 @@ function setupTransactions_(ss) {
     'MLS Status',
     'Follow-Up Flag',
     'Archive Reason',
+    'Archive Notes',
     'Needs Review?',
     'Review Reasons',
     'Urgency',
@@ -542,6 +543,9 @@ function toClientTransaction_(tx, user) {
     binderStatus: tx['Binder Status'],
     mlsStatus: tx['MLS Status'] || '',
     followUpFlag: tx['Follow-Up Flag'] || '',
+    archiveReason: tx['Archive Reason'] || '',
+    archiveNotes: tx['Archive Notes'] || '',
+    updatedAt: tx['Updated At'] || '',
     needsReview: user.role === 'Agent' ? false : tx['Needs Review?'] === 'Yes',
     reviewReasons: user.canViewFinancials ? tx['Review Reasons'] : '',
     canLaunchAction: Boolean(next),
@@ -609,12 +613,25 @@ function completeInternalAction(transactionId, notes) {
   return advanceTransaction_(auth.user, auth.tx, action, notes || '');
 }
 
-const LISTING_APPOINTMENT_OUTCOMES = ['SECURED', 'ARCHIVED', 'RESCHEDULED', 'FOLLOW_UP'];
+const LISTING_APPOINTMENT_OUTCOMES = ['SECURED', 'RESCHEDULED', 'FOLLOW_UP'];
+
+const ARCHIVE_REASONS = [
+  'Lost to another Realtor',
+  'Seller decided not to sell',
+  'Expired',
+  'Withdrawn',
+  'Duplicate',
+  'Test Transaction',
+  'Client Ghosted',
+  'Other'
+];
 
 /**
  * Records the outcome of a Listing Appointment. Replaces the generic
- * "Mark Complete" for the RECORD_OUTCOME action with four distinct,
+ * "Mark Complete" for the RECORD_OUTCOME action with distinct,
  * intentional outcomes instead of a single ambiguous completion.
+ * Archiving has its own dedicated function (archiveTransaction) since
+ * it requires a structured reason, unlike these three.
  */
 function recordListingAppointmentOutcome(transactionId, outcome, notes) {
   if (!LISTING_APPOINTMENT_OUTCOMES.includes(outcome)) {
@@ -636,29 +653,6 @@ function recordListingAppointmentOutcome(transactionId, outcome, notes) {
     return advanceTransaction_(auth.user, auth.tx, action, notes || '');
   }
 
-  if (outcome === 'ARCHIVED') {
-    updateTransactionFields_(transactionId, {
-      'Status': 'Lost',
-      'Follow-Up Flag': '',
-      'Archive Reason': notes || 'Lost Listing',
-      'Updated At': new Date(),
-      'Last Action By': auth.user.email
-    });
-
-    logActivity_(
-      auth.user,
-      transactionId,
-      'LISTING_ARCHIVED',
-      auth.tx['Current Stage Name'],
-      auth.tx['Current Stage Name'],
-      action['Action Name'],
-      '',
-      notes || 'Listing did not secure.'
-    );
-
-    return { success: true, transactionId: transactionId };
-  }
-
   const flag = outcome === 'RESCHEDULED' ? 'Rescheduled' : 'Follow-Up Needed';
 
   updateTransactionFields_(transactionId, {
@@ -676,6 +670,52 @@ function recordListingAppointmentOutcome(transactionId, outcome, notes) {
     action['Action Name'],
     '',
     notes || flag
+  );
+
+  return { success: true, transactionId: transactionId };
+}
+
+/**
+ * Archives a transaction with a structured reason (for reporting) and
+ * optional free-text notes. Reason must be one of ARCHIVE_REASONS;
+ * "Other" requires notes.
+ */
+function archiveTransaction(transactionId, reason, notes) {
+  if (!ARCHIVE_REASONS.includes(reason)) {
+    throw new Error('Unknown archive reason: ' + reason);
+  }
+  if (reason === 'Other' && !String(notes || '').trim()) {
+    throw new Error('Notes are required when selecting "Other".');
+  }
+
+  const auth = getAuthorizedTransaction_(transactionId);
+  const action = getCurrentActionForTransaction_(auth.tx);
+
+  if (!action || action['Action Key'] !== 'RECORD_OUTCOME') {
+    throw new Error('This transaction is not awaiting a listing appointment outcome.');
+  }
+  if (!canUserPerformAction_(auth.user, action)) {
+    throw new Error('You are not authorized to archive this transaction.');
+  }
+
+  updateTransactionFields_(transactionId, {
+    'Status': 'Lost',
+    'Follow-Up Flag': '',
+    'Archive Reason': reason,
+    'Archive Notes': notes || '',
+    'Updated At': new Date(),
+    'Last Action By': auth.user.email
+  });
+
+  logActivity_(
+    auth.user,
+    transactionId,
+    'LISTING_ARCHIVED',
+    auth.tx['Current Stage Name'],
+    auth.tx['Current Stage Name'],
+    action['Action Name'],
+    '',
+    reason + (notes ? ' — ' + notes : '')
   );
 
   return { success: true, transactionId: transactionId };

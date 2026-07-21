@@ -1067,7 +1067,7 @@
         <select id="statusFilter" class="secondary" onchange="renderTransactions()">
           <option value="ACTIVE">Active</option>
           <option value="CLOSED">Closed</option>
-          <option value="ARCHIVED">Archived</option>
+          <option value="ARCHIVED">Archived Transactions</option>
           <option value="ALL">All</option>
         </select>
 
@@ -1378,6 +1378,52 @@
     </div>
   </div>
 
+  <div
+    id="archiveReasonBackdrop"
+    class="modal-backdrop"
+    onclick="closeArchiveReasonFromBackdrop(event)"
+  >
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Archive / Did Not Secure</div>
+          <div class="subtitle">A reason helps with reporting later.</div>
+        </div>
+        <button class="close" onclick="closeArchiveReasonModal()">&times;</button>
+      </div>
+
+      <form onsubmit="submitArchiveReason(event)" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div class="detail-label" style="margin-bottom:6px;">Reason</div>
+          <select id="archiveReasonSelect" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;">
+            <option value="Lost to another Realtor">Lost to another Realtor</option>
+            <option value="Seller decided not to sell">Seller decided not to sell</option>
+            <option value="Expired">Expired</option>
+            <option value="Withdrawn">Withdrawn</option>
+            <option value="Duplicate">Duplicate</option>
+            <option value="Test Transaction">Test Transaction</option>
+            <option value="Client Ghosted">Client Ghosted</option>
+            <option value="Other">Other (requires notes)</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="detail-label" style="margin-bottom:6px;">Notes (optional, required if Other)</div>
+          <textarea id="archiveReasonNotes" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;"></textarea>
+        </div>
+
+        <div id="archiveReasonError" style="color:#b3261e;font-size:13px;display:none;">
+          Notes are required when selecting "Other".
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" class="secondary" onclick="closeArchiveReasonModal()">Cancel</button>
+          <button type="submit" class="primary" id="archiveReasonSubmit">Archive Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let portalData = null;
     let wizardOptions = null;
@@ -1546,18 +1592,24 @@
             "</div>" +
 
             '<div style="display:flex;gap:6px;">' +
-              '<div class="stage">' +
-                escapeHtml(item.currentStageName || "") +
-              "</div>" +
               (
-                item.mlsStatus
-                  ? '<div class="stage">' + escapeHtml(item.mlsStatus) + "</div>"
-                  : ""
-              ) +
-              (
-                item.followUpFlag
-                  ? '<div class="stage" style="background:#fbeceb;color:var(--danger);">' +
-                    escapeHtml(item.followUpFlag) + "</div>"
+                item.status === "Active"
+                  ? (
+                      '<div class="stage">' +
+                        escapeHtml(item.currentStageName || "") +
+                      "</div>" +
+                      (
+                        item.mlsStatus
+                          ? '<div class="stage">' + escapeHtml(item.mlsStatus) + "</div>"
+                          : ""
+                      ) +
+                      (
+                        item.followUpFlag
+                          ? '<div class="stage" style="background:#fbeceb;color:var(--danger);">' +
+                            escapeHtml(item.followUpFlag) + "</div>"
+                          : ""
+                      )
+                    )
                   : ""
               ) +
             "</div>" +
@@ -1565,27 +1617,7 @@
 
           '<div class="card-bottom">' +
             "<div>" +
-              (
-                item.status === "Active"
-                  ? (
-                      "<small>Current action</small><br>" +
-
-                      "<strong>" +
-                        escapeHtml(
-                          item.currentActionName ||
-                          "No action configured"
-                        ) +
-                      "</strong>" +
-
-                      '<div class="meta">' +
-                        "Assigned role: " +
-                        escapeHtml(
-                          item.assignedRole || "Not assigned"
-                        ) +
-                      "</div>"
-                    )
-                  : ""
-              ) +
+              renderCardStatusStory(item) +
             "</div>" +
 
             '<div onclick="event.stopPropagation()">' +
@@ -1595,6 +1627,56 @@
 
         "</div>"
       );
+    }
+
+    function renderCardStatusStory(item) {
+      if (item.status === "Active") {
+        return (
+          "<small>Current action</small><br>" +
+
+          "<strong>" +
+            escapeHtml(item.currentActionName || "No action configured") +
+          "</strong>" +
+
+          '<div class="meta">' +
+            "Assigned role: " + escapeHtml(item.assignedRole || "Not assigned") +
+          "</div>"
+        );
+      }
+
+      if (item.status === "Lost") {
+        return (
+          '<div class="detail-label">Status</div>' +
+          '<div style="font-weight:700;">🔴 Did Not Secure Listing</div>' +
+
+          '<div class="detail-label" style="margin-top:8px;">Archived</div>' +
+          '<div>' + escapeHtml(item.updatedAt || "Not available") + "</div>" +
+
+          '<div class="detail-label" style="margin-top:8px;">Reason</div>' +
+          '<div>' + escapeHtml(item.archiveReason || "Not specified") + "</div>" +
+
+          (
+            item.archiveNotes
+              ? (
+                  '<div class="detail-label" style="margin-top:8px;">Notes</div>' +
+                  '<div>' + escapeHtml(item.archiveNotes) + "</div>"
+                )
+              : ""
+          )
+        );
+      }
+
+      if (item.status === "Closed") {
+        return (
+          '<div class="detail-label">Status</div>' +
+          '<div style="font-weight:700;">✅ Closed</div>' +
+
+          '<div class="detail-label" style="margin-top:8px;">Closed</div>' +
+          '<div>' + escapeHtml(item.updatedAt || "Not available") + "</div>"
+        );
+      }
+
+      return "";
     }
 
     function actionButtonLabel(actionKey, actionName) {
@@ -1607,7 +1689,7 @@
         return (
           '<button class="primary" onclick="restoreTransaction(\'' +
           escapeJs(item.transactionId) +
-          "', this)\">Restore to Active</button>"
+          "', this)\">🟢 Restore Transaction</button>"
         );
       }
 
@@ -1660,7 +1742,7 @@
       return (
         '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' +
           '<button class="primary" onclick="recordOutcome(\'' + id + '\', \'SECURED\', this)">Listing Secured</button>' +
-          '<button class="secondary" onclick="recordOutcome(\'' + id + '\', \'ARCHIVED\', this)">Archive / Did Not Secure</button>' +
+          '<button class="secondary" onclick="openArchiveReasonModal(\'' + id + '\')">Archive / Did Not Secure</button>' +
           '<button class="secondary" onclick="recordOutcome(\'' + id + '\', \'RESCHEDULED\', this)">Rescheduled</button>' +
           '<button class="secondary" onclick="recordOutcome(\'' + id + '\', \'FOLLOW_UP\', this)">Follow-Up Needed</button>' +
         "</div>"
@@ -1683,6 +1765,62 @@
           alert(error.message || String(error));
         })
         .recordListingAppointmentOutcome(transactionId, outcome, notes);
+    }
+
+    let archiveReasonTransactionId = null;
+
+    function openArchiveReasonModal(transactionId) {
+      archiveReasonTransactionId = transactionId;
+      document.getElementById("archiveReasonSelect").value = "Lost to another Realtor";
+      document.getElementById("archiveReasonNotes").value = "";
+      document.getElementById("archiveReasonError").style.display = "none";
+      document.getElementById("archiveReasonBackdrop").classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeArchiveReasonModal() {
+      document.getElementById("archiveReasonBackdrop").classList.remove("open");
+      document.body.style.overflow = "";
+      archiveReasonTransactionId = null;
+    }
+
+    function closeArchiveReasonFromBackdrop(event) {
+      if (event.target.id === "archiveReasonBackdrop") {
+        closeArchiveReasonModal();
+      }
+    }
+
+    function submitArchiveReason(event) {
+      event.preventDefault();
+
+      const reason = document.getElementById("archiveReasonSelect").value;
+      const notes = document.getElementById("archiveReasonNotes").value.trim();
+      const errorEl = document.getElementById("archiveReasonError");
+
+      if (reason === "Other" && !notes) {
+        errorEl.style.display = "block";
+        return;
+      }
+      errorEl.style.display = "none";
+
+      const transactionId = archiveReasonTransactionId;
+      const submitButton = document.getElementById("archiveReasonSubmit");
+      submitButton.disabled = true;
+      submitButton.textContent = "Archiving…";
+
+      google.script.run
+        .withSuccessHandler(function () {
+          submitButton.disabled = false;
+          submitButton.textContent = "Archive Transaction";
+          closeArchiveReasonModal();
+          refreshPortalAndWorkspace(transactionId);
+        })
+        .withFailureHandler(function (error) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Archive Transaction";
+          alert(error.message || String(error));
+        })
+        .archiveTransaction(transactionId, reason, notes);
     }
 
     function openCurrentAction(transactionId, button) {
@@ -1820,6 +1958,28 @@
       return "Stage " + (currentIndex + 1) + " of " + WORKFLOW_MILESTONES.length;
     }
 
+    function renderCompactArchiveTimeline(timeline) {
+      const rows = timeline
+        .filter(function (stage) {
+          return stage.status === "complete" || stage.status === "current";
+        })
+        .map(function (stage) {
+          const icon = stage.status === "complete" ? "✓" : "✕";
+          const style = stage.status === "complete"
+            ? "color:var(--success);font-weight:700;"
+            : "color:var(--danger);font-weight:700;";
+
+          return (
+            '<div style="padding:4px 0;' + style + '">' +
+              icon + " " + escapeHtml(stage.stageName || "") +
+            "</div>"
+          );
+        })
+        .join("");
+
+      return rows + '<div style="padding:4px 0;color:var(--muted);">Archived</div>';
+    }
+
     function renderTransactionWorkspace(data) {
       document.getElementById(
         "workspaceHeaderAddress"
@@ -1891,16 +2051,25 @@
               data.status === "Lost"
                 ? (
                     '<div class="detail-label">Status</div>' +
-                    '<div style="font-weight:700;">Archived</div>' +
+                    '<div style="font-weight:700;">🔴 Did Not Secure Listing</div>' +
+
+                    '<div class="detail-label" style="margin-top:10px;">Archived</div>' +
+                    '<div>' + escapeHtml(data.listingDetails.updatedAt || "Not available") + "</div>" +
 
                     '<div class="detail-label" style="margin-top:10px;">Reason</div>' +
                     '<div>' + escapeHtml(data.listingDetails.archiveReason || "Not specified") + "</div>" +
 
-                    '<div class="detail-label" style="margin-top:10px;">Archived By</div>' +
-                    '<div>' + escapeHtml(data.listingDetails.lastActionBy || "Not available") + "</div>" +
+                    (
+                      data.listingDetails.archiveNotes
+                        ? (
+                            '<div class="detail-label" style="margin-top:10px;">Notes</div>' +
+                            '<div>' + escapeHtml(data.listingDetails.archiveNotes) + "</div>"
+                          )
+                        : ""
+                    ) +
 
-                    '<div class="detail-label" style="margin-top:10px;margin-bottom:14px;">Archived</div>' +
-                    '<div>' + escapeHtml(data.listingDetails.updatedAt || "Not available") + "</div>"
+                    '<div class="detail-label" style="margin-top:10px;margin-bottom:14px;">Archived By</div>' +
+                    '<div>' + escapeHtml(data.listingDetails.lastActionBy || "Not available") + "</div>"
                   )
                 : (
                     '<div class="detail-label">Next step</div>' +
@@ -1916,8 +2085,17 @@
             actionButtons +
 
             '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">' +
-              '<div class="detail-label" style="margin-bottom:8px;">Workflow Progress</div>' +
-              renderWorkflowMilestones(data.workflow.currentStageKey) +
+              (
+                data.status === "Lost"
+                  ? (
+                      '<div class="detail-label" style="margin-bottom:8px;">Timeline</div>' +
+                      renderCompactArchiveTimeline(data.workflow.timeline || [])
+                    )
+                  : (
+                      '<div class="detail-label" style="margin-bottom:8px;">Workflow Progress</div>' +
+                      renderWorkflowMilestones(data.workflow.currentStageKey)
+                    )
+              ) +
             "</div>" +
           "</div>" +
 
@@ -2269,7 +2447,7 @@
           '<div class="workspace-button-row">' +
             '<button class="primary" onclick="restoreTransaction(\'' +
             escapeJs(data.transactionId) +
-            "', this)\">Restore to Active</button>" +
+            "', this)\">🟢 Restore Transaction</button>" +
           "</div>"
         );
       }
@@ -2407,6 +2585,10 @@
     }
 
     function restoreTransaction(transactionId, button) {
+      if (!confirm("Restore this transaction to the active workflow?")) {
+        return;
+      }
+
       button.disabled = true;
       button.textContent = "Restoring…";
 
@@ -2416,7 +2598,7 @@
         })
         .withFailureHandler(function (error) {
           button.disabled = false;
-          button.textContent = "Restore to Active";
+          button.textContent = "🟢 Restore Transaction";
           alert(error.message || String(error));
         })
         .restoreTransactionToActive(transactionId);

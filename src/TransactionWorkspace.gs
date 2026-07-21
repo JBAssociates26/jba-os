@@ -172,7 +172,9 @@ function getTransactionWorkspace(transactionId) {
       lastActionBy:
         tx['Last Action By'] || '',
       archiveReason:
-        tx['Archive Reason'] || ''
+        tx['Archive Reason'] || '',
+      archiveNotes:
+        tx['Archive Notes'] || ''
     },
 
     permissions: {
