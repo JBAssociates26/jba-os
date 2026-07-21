@@ -646,10 +646,16 @@ function advanceTransaction_(user, tx, action, details) {
     throw new Error(`Next stage is not configured: ${nextStageKey}`);
   }
 
-  const nextAction = getFirstActionForStage_(
-    tx['Workflow Key'],
-    nextStageKey
-  );
+  const nextAction = nextStageKey === tx['Current Stage Key']
+    ? getNextActionForStage_(
+        tx['Workflow Key'],
+        nextStageKey,
+        Number(action['Action Order'] || 0)
+      )
+    : getFirstActionForStage_(
+        tx['Workflow Key'],
+        nextStageKey
+      );
 
   updateTransactionFields_(tx['Transaction ID'], {
     'Updated At': new Date(),
@@ -729,6 +735,28 @@ function getFirstActionForStage_(workflowKey, stageKey) {
     .sort((a, b) =>
       Number(a['Action Order'] || 0) - Number(b['Action Order'] || 0)
     )[0] || null;
+}
+
+/**
+ * Returns the next action in a stage after previousActionOrder. Used when
+ * an action's Next Stage Key points back at the same stage (e.g. LIVE has
+ * two sequential actions), so completion moves forward instead of
+ * restarting at the stage's first action.
+ */
+function getNextActionForStage_(workflowKey, stageKey, previousActionOrder) {
+  const actions = sheetObjects_(JBA_OS.sheets.workflowActions)
+    .filter(row =>
+      row['Workflow Key'] === workflowKey &&
+      row['Stage Key'] === stageKey &&
+      row['Active?'] === 'Yes'
+    )
+    .sort((a, b) =>
+      Number(a['Action Order'] || 0) - Number(b['Action Order'] || 0)
+    );
+
+  return actions.find(row =>
+    Number(row['Action Order'] || 0) > previousActionOrder
+  ) || null;
 }
 
 /* =========================================================
