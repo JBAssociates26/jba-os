@@ -365,7 +365,7 @@ function seedDefaultWorkflow_() {
       ['SELLER_LISTING', 'PRE_LISTING', 'PRELIST_CHECKLIST', 'Complete Pre-Listing Checklist', 10, 'FORM', 'PRELIST', 'Agent', 'Yes', 'APPOINTMENT', 'Yes', 'Complete before listing appointment'],
       ['SELLER_LISTING', 'APPOINTMENT', 'RECORD_OUTCOME', 'Record Listing Appointment Outcome', 10, 'INTERNAL', '', 'Agent', 'Yes', 'LISTING_SECURED', 'Yes', 'Record whether listing was secured'],
       ['SELLER_LISTING', 'LISTING_SECURED', 'PHOTO_ORDER', 'Order Photography', 10, 'FORM', 'PHOTO_ORDER', 'Agent', 'Yes', 'PHOTOS', 'Yes', 'Submit photography order'],
-      ['SELLER_LISTING', 'PHOTOS', 'CONFIRM_PHOTOS', 'Confirm Photos Complete', 10, 'INTERNAL', '', 'Marketing', 'Yes', 'MLS_PREP', 'Yes', 'Confirm media delivery'],
+      ['SELLER_LISTING', 'PHOTOS', 'CONFIRM_PHOTOS', 'Confirm Photos Complete', 10, 'INTERNAL', '', 'Marketing', 'Yes', 'READY_LIVE', 'Yes', 'Confirm media delivery'],
       ['SELLER_LISTING', 'MLS_PREP', 'MLS_SUBMISSION', 'Complete MLS Submission', 10, 'FORM', 'MLS_SUBMISSION', 'Agent', 'Yes', 'READY_LIVE', 'Yes', 'Submit all listing data'],
       ['SELLER_LISTING', 'READY_LIVE', 'FINAL_REVIEW', 'Final Listing Review', 10, 'INTERNAL', '', 'Operations Admin', 'Yes', 'LIVE', 'Yes', 'Approve listing activation'],
       ['SELLER_LISTING', 'LIVE', 'MARKETING_LAUNCH', 'Launch Listing Marketing', 10, 'INTERNAL', '', 'Marketing', 'Yes', 'LIVE', 'Yes', 'Complete marketing launch'],
