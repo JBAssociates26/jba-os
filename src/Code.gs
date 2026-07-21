@@ -399,7 +399,7 @@ function seedDefaultWorkflow_() {
  * Stages/Actions sheets already have seller rows, so appending here
  * would never run there. Run once manually.
  */
-function seedDefaultBuyerWorkflow_() {
+function seedDefaultBuyerWorkflow() {
   const ss = getDatabase_();
   const stageSheet = ss.getSheetByName(JBA_OS.sheets.workflowStages);
   const actionSheet = ss.getSheetByName(JBA_OS.sheets.workflowActions);
@@ -1076,7 +1076,7 @@ function createBuyerTransaction(payload) {
   const action = getFirstActionForStage_('BUYER_TRANSACTION', 'PENDING');
 
   if (!stage) {
-    throw new Error('Buyer Transaction workflow is not configured. Run seedDefaultBuyerWorkflow_() first.');
+    throw new Error('Buyer Transaction workflow is not configured. Run seedDefaultBuyerWorkflow() first.');
   }
 
   const row = {
