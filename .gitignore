@@ -1,0 +1,7 @@
+# Real clasp config contains your live Script ID -- keep it local only
+.clasp.json
+
+# Editor/OS cruft
+.DS_Store
+*.log
+node_modules/

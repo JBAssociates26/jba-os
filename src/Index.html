@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --gold: #b79a5b;
+      --dark: #17191d;
+      --ink: #20242a;
+      --muted: #6c737d;
+      --background: #f4f5f7;
+      --surface: #ffffff;
+      --border: #e2e5e9;
+      --danger: #b42318;
+      --success: #177245;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    header {
+      padding: 20px 28px;
+      background: var(--dark);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .subtitle,
+    .user-role {
+      margin-top: 4px;
+      color: #c7c9cc;
+      font-size: 13px;
+    }
+
+    .user {
+      text-align: right;
+      font-size: 13px;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search {
+      width: 360px;
+      max-width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+    }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--gold);
+      color: var(--ink);
+    }
+
+    .secondary {
+      background: #eceef1;
+      color: var(--ink);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .stat,
+    .card,
+    .message {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(23, 25, 29, 0.08);
+    }
+
+    .stat {
+      padding: 16px;
+    }
+
+    .stat small {
+      color: var(--muted);
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 7px;
+      font-size: 26px;
+    }
+
+    .cards {
+      display: grid;
+      gap: 15px;
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .card-top,
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .card-bottom {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      align-items: center;
+    }
+
+    .address {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .stage {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #f1ede3;
+      color: #7a6334;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .message {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    /* Wizard */
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      padding: 20px;
+      overflow-y: auto;
+      background: rgba(10, 12, 15, 0.7);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .modal {
+      width: min(820px, 100%);
+      margin: auto;
+      background: white;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      background: var(--dark);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .close {
+      padding: 0;
+      background: transparent;
+      color: white;
+      font-size: 28px;
+    }
+
+    .progress {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 18px 24px 0;
+    }
+
+    .progress-item {
+      padding-bottom: 10px;
+      border-bottom: 4px solid #e4e6e9;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .progress-item.active {
+      border-color: var(--gold);
+      color: var(--ink);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .section-title {
+      margin-bottom: 5px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .section-help {
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    label.required::after {
+      content: " *";
+      color: var(--danger);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .wizard-error {
+      display: none;
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 9px;
+      background: #fff1f0;
+      color: var(--danger);
+    }
+
+    .wizard-error.show {
+      display: block;
+    }
+
+    .modal-footer {
+      padding: 18px 24px;
+      border-top: 1px solid var(--border);
+      background: #fafafa;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .success {
+      text-align: center;
+      padding: 25px;
+    }
+
+    .success-icon {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: #e5f4ec;
+      color: var(--success);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      font-weight: 700;
+    }
+    /* Transaction Workspace */
+
+    .card {
+      cursor: pointer;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: #d2c39f;
+      box-shadow: 0 14px 38px rgba(23, 25, 29, 0.12);
+    }
+
+    .card button {
+      position: relative;
+      z-index: 2;
+    }
+
+    .workspace-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      padding: 20px;
+      overflow-y: auto;
+      background: rgba(10, 12, 15, 0.76);
+    }
+
+    .workspace-backdrop.open {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .workspace-modal {
+      width: min(1100px, 100%);
+      margin: auto;
+      background: var(--background);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+    }
+
+    .workspace-header {
+      padding: 24px 28px;
+      background: var(--dark);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .workspace-address {
+      margin-top: 5px;
+      font-size: 25px;
+      font-weight: 700;
+    }
+
+    .workspace-id {
+      margin-top: 7px;
+      color: #c7c9cc;
+      font-size: 13px;
+    }
+
+    .workspace-body {
+      padding: 24px;
+    }
+
+    .workspace-loading {
+      padding: 60px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .workspace-summary {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .workspace-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(23, 25, 29, 0.06);
+    }
+
+    .workspace-section-title {
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .workspace-stage-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .workspace-current-stage {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .workspace-current-action {
+      margin-top: 7px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .workspace-progress-track {
+      height: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e7e9ec;
+    }
+
+    .workspace-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--gold);
+    }
+
+    .workspace-progress-label {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 145px 1fr;
+      gap: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .detail-value {
+      font-size: 14px;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .workflow-timeline {
+      display: grid;
+      gap: 0;
+    }
+
+    .timeline-stage {
+      position: relative;
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 12px;
+      min-height: 58px;
+    }
+
+    .timeline-marker {
+      position: relative;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      border: 3px solid #c9cdd2;
+      border-radius: 50%;
+      background: white;
+      z-index: 1;
+    }
+
+    .timeline-stage:not(:last-child) .timeline-marker::after {
+      content: "";
+      position: absolute;
+      top: 15px;
+      left: 5px;
+      width: 2px;
+      height: 43px;
+      background: #d9dce0;
+    }
+
+    .timeline-stage.complete .timeline-marker {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    .timeline-stage.current .timeline-marker {
+      border-color: var(--gold);
+      background: var(--gold);
+    }
+
+    .timeline-stage.complete .timeline-marker::after {
+      background: var(--success);
+    }
+
+    .timeline-name {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .timeline-description {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 12px;
+      max-height: 410px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+    }
+
+    .activity-action {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .activity-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .workspace-notes {
+      min-height: 130px;
+    }
+
+    .workspace-button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .workspace-error {
+      padding: 50px 24px;
+      text-align: center;
+      color: var(--danger);
+    }
+
+
+    /* Native Checklist */
+
+    .checklist-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      padding: 20px;
+      overflow-y: auto;
+      background: rgba(10, 12, 15, 0.8);
+    }
+
+    .checklist-overlay.open {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .checklist-modal {
+      width: min(900px, 100%);
+      margin: auto;
+      overflow: hidden;
+      border-radius: 18px;
+      background: var(--background);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.4);
+    }
+
+    .checklist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 22px 26px;
+      background: var(--dark);
+      color: white;
+    }
+
+    .checklist-title {
+      margin-top: 4px;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .checklist-context {
+      margin-top: 7px;
+      color: #c7c9cc;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .checklist-body {
+      padding: 22px;
+    }
+
+    .checklist-progress {
+      margin-bottom: 18px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: white;
+    }
+
+    .checklist-progress-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .checklist-items {
+      display: grid;
+      gap: 13px;
+    }
+
+    .checklist-item {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+    }
+
+    .checklist-checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+    }
+
+    .checklist-checkbox-row input {
+      width: 19px;
+      height: 19px;
+      margin-top: 1px;
+    }
+
+    .checklist-item-label {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .checklist-required {
+      color: var(--danger);
+    }
+
+    .checklist-help {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .checklist-actions {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 16px 22px;
+      border-top: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .checklist-message {
+      display: none;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 9px;
+    }
+
+    .checklist-message.show {
+      display: block;
+    }
+
+    .checklist-message.error {
+      background: #fff1f0;
+      color: var(--danger);
+    }
+
+    .checklist-message.success {
+      background: #e5f4ec;
+      color: var(--success);
+    }
+
+
+
+    .parallel-prep-card {
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .parallel-prep-card h3 {
+      margin: 0 0 5px;
+    }
+
+    .parallel-prep-card > p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .parallel-prep-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .parallel-prep-item {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .parallel-prep-item.complete {
+      background: #f3faf5;
+      border-color: #b9d9c1;
+    }
+
+    .parallel-prep-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .parallel-status {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 700px) {
+      .parallel-prep-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .checklist-section {
+      margin: 0 0 20px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    .checklist-section-title {
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .checklist-item.is-hidden {
+      display: none;
+    }
+
+    .checklist-item.is-read-only {
+      background: #f6f7f8;
+    }
+
+    .checklist-read-only-value {
+      padding: 12px 13px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #eef1f3;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Checklist validation and autosave */
+
+    .checklist-item.missing-required {
+      border-color: var(--danger);
+      background: #fff7f6;
+      box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.08);
+    }
+
+    .checklist-item.missing-required input,
+    .checklist-item.missing-required select,
+    .checklist-item.missing-required textarea {
+      border-color: var(--danger);
+      background: #fffdfd;
+    }
+
+    .checklist-required-message {
+      display: none;
+      margin-top: 8px;
+      color: var(--danger);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .checklist-item.missing-required .checklist-required-message {
+      display: block;
+    }
+
+    .checklist-missing-summary {
+      display: none;
+      margin-bottom: 16px;
+      padding: 15px 16px;
+      border: 1px solid #f0b8b3;
+      border-left: 4px solid var(--danger);
+      border-radius: 10px;
+      background: #fff1f0;
+      color: var(--danger);
+    }
+
+    .checklist-missing-summary.show {
+      display: block;
+    }
+
+    .checklist-missing-summary strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .checklist-missing-link {
+      display: block;
+      width: 100%;
+      padding: 4px 0;
+      border: 0;
+      background: transparent;
+      color: var(--danger);
+      text-align: left;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .checklist-save-status {
+      margin-right: auto;
+      align-self: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .checklist-save-status.saving {
+      color: #7a6334;
+    }
+
+    .checklist-save-status.saved {
+      color: var(--success);
+    }
+
+    .checklist-save-status.error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 900px) {
+      .stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 700px) {
+      header,
+      .hero,
+      .hero-actions,
+      .card-top,
+      .card-bottom {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search,
+      .hero-actions button {
+        width: 100%;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+            .workspace-summary,
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace-header,
+      .workspace-stage-row {
+        flex-direction: column;
+      }
+
+      .detail-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>
+      <div class="brand" id="company">Jim Bunn &amp; Associates</div>
+      <div class="subtitle" id="portalTitle">JBA OS</div>
+    </div>
+
+    <div class="user" id="user"></div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>My Transactions</h1>
+        <p>Your current work, next required action, and transaction stage.</p>
+      </div>
+
+      <div class="hero-actions">
+        <input
+          id="search"
+          class="search"
+          type="search"
+          placeholder="Search address, client, agent, or transaction ID"
+          oninput="renderTransactions()"
+        >
+
+        <button
+          id="newListingButton"
+          class="primary"
+          onclick="openWizard()"
+        >
+          + New Listing
+        </button>
+      </div>
+    </div>
+
+    <div id="stats" class="stats"></div>
+
+    <div id="content">
+      <div class="message">Verifying access and loading JBA OS…</div>
+    </div>
+  </main>
+
+  <div
+    id="wizardBackdrop"
+    class="modal-backdrop"
+    onclick="closeFromBackdrop(event)"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Create New Listing</div>
+          <div class="subtitle">
+            Start a seller-listing transaction in JBA OS.
+          </div>
+        </div>
+
+        <button class="close" onclick="closeWizard()">&times;</button>
+      </div>
+
+      <div id="progress" class="progress">
+        <div class="progress-item active">1. Property</div>
+        <div class="progress-item">2. Seller</div>
+        <div class="progress-item">3. Listing</div>
+      </div>
+
+      <div id="modalBody" class="modal-body">
+        <form id="wizardForm" onsubmit="return false;">
+          <section class="panel active" data-step="1">
+            <div class="section-title">Property</div>
+            <div class="section-help">
+              Enter the property being prepared for listing.
+            </div>
+
+            <div class="form-grid">
+              <div class="field full">
+                <label class="required">Street address</label>
+                <input id="propertyAddress">
+              </div>
+
+              <div class="field">
+                <label class="required">City</label>
+                <input id="city">
+              </div>
+
+              <div class="field">
+                <label class="required">State</label>
+                <input id="state" value="MI" maxlength="2">
+              </div>
+
+              <div class="field">
+                <label class="required">ZIP code</label>
+                <input id="postalCode">
+              </div>
+
+              <div class="field">
+                <label>County</label>
+                <select id="county"></select>
+              </div>
+
+              <div class="field">
+                <label>Property type</label>
+                <select id="propertyType"></select>
+              </div>
+
+              <div class="field full">
+                <label>Unit or secondary address</label>
+                <input id="addressLine2">
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" data-step="2">
+            <div class="section-title">Seller</div>
+            <div class="section-help">
+              Enter the primary seller contact information.
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label class="required">First name</label>
+                <input id="clientFirstName">
+              </div>
+
+              <div class="field">
+                <label class="required">Last name</label>
+                <input id="clientLastName">
+              </div>
+
+              <div class="field">
+                <label>Email</label>
+                <input id="clientEmail" type="email">
+              </div>
+
+              <div class="field">
+                <label>Phone</label>
+                <input id="clientPhone" type="tel">
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" data-step="3">
+            <div class="section-title">Listing</div>
+            <div class="section-help">
+              Assign the listing and enter the appointment details.
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label class="required">Listing agent</label>
+                <select id="agentEmail" onchange="syncAgentName()"></select>
+                <input id="listingAgent" type="hidden">
+              </div>
+
+              <div class="field">
+                <label>Expected list price</label>
+                <input id="anticipatedListPrice" placeholder="450000">
+              </div>
+
+              <div class="field">
+                <label>Appointment date</label>
+                <input id="appointmentDate" type="date">
+              </div>
+
+              <div class="field">
+                <label>Appointment time</label>
+                <input id="appointmentTime" type="time">
+              </div>
+
+              <div class="field">
+                <label>Marketing coordinator</label>
+                <select id="assignedMarketingEmail"></select>
+              </div>
+
+              <div class="field">
+                <label>Transaction coordinator</label>
+                <select id="assignedTCEmail"></select>
+              </div>
+
+              <div class="field">
+                <label>Listing binder needed?</label>
+                <select id="binderNeeded">
+                  <option value="">Select</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Urgency</label>
+                <select id="urgency">
+                  <option value="">Normal</option>
+                  <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+              </div>
+
+              <div class="field full">
+                <label>Notes</label>
+                <textarea id="notes"></textarea>
+              </div>
+            </div>
+          </section>
+        </form>
+
+        <div id="wizardError" class="wizard-error"></div>
+      </div>
+
+      <div id="modalFooter" class="modal-footer">
+        <button
+          id="backButton"
+          class="secondary"
+          onclick="previousStep()"
+          disabled
+        >
+          Back
+        </button>
+
+        <button
+          id="nextButton"
+          class="primary"
+          onclick="nextStep()"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  </div>
+  <div
+    id="workspaceBackdrop"
+    class="workspace-backdrop"
+    onclick="closeWorkspaceFromBackdrop(event)"
+  >
+    <div class="workspace-modal">
+      <div class="workspace-header">
+        <div>
+          <div class="subtitle">Transaction Workspace</div>
+          <div
+            id="workspaceHeaderAddress"
+            class="workspace-address"
+          >
+            Loading…
+          </div>
+
+          <div
+            id="workspaceHeaderId"
+            class="workspace-id"
+          ></div>
+        </div>
+
+        <button
+          class="close"
+          onclick="closeTransactionWorkspace()"
+        >
+          &times;
+        </button>
+      </div>
+
+      <div id="workspaceBody" class="workspace-body">
+        <div class="workspace-loading">
+          Loading transaction workspace…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="checklistOverlay"
+    class="checklist-overlay"
+    onclick="closeChecklistFromBackdrop(event)"
+  >
+    <div class="checklist-modal">
+      <div class="checklist-header">
+        <div>
+          <div class="subtitle">Native JBA OS Checklist</div>
+          <div id="checklistTitle" class="checklist-title">Loading…</div>
+          <div id="checklistContext" class="checklist-context"></div>
+        </div>
+
+        <button class="close" onclick="closeNativeChecklist()">&times;</button>
+      </div>
+
+      <div id="checklistBody" class="checklist-body">
+        <div class="workspace-loading">Loading checklist…</div>
+      </div>
+
+      <div id="checklistActions" class="checklist-actions" style="display:none;">
+        <div id="checklistSaveStatus" class="checklist-save-status"></div>
+        <button class="secondary" onclick="closeNativeChecklist()">Close</button>
+        <button id="saveChecklistButton" class="secondary" onclick="saveChecklist(false)">
+          Save Progress
+        </button>
+        <button id="completeChecklistButton" class="primary" onclick="saveChecklist(true)">
+          Complete Checklist
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let portalData = null;
+    let wizardOptions = null;
+    let currentStep = 1;
+    let wizardBusy = false;
+
+    window.addEventListener("load", function () {
+      if (
+        typeof google === "undefined" ||
+        !google.script ||
+        !google.script.run
+      ) {
+        showPortalError("Google Apps Script did not initialize.");
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(loadPortal)
+        .withFailureHandler(function (error) {
+          showPortalError(error.message || String(error));
+        })
+        .getPortalData();
+    });
+
+    function loadPortal(result) {
+      portalData = result;
+
+      document.getElementById("company").textContent =
+        result.companyName || "Jim Bunn & Associates";
+
+      document.getElementById("portalTitle").textContent =
+        result.portalTitle || "JBA OS";
+
+      document.getElementById("user").innerHTML =
+        escapeHtml(result.user.displayName || result.user.email) +
+        '<div class="user-role">' +
+        escapeHtml(result.user.role || "") +
+        "</div>";
+
+      const canCreate = [
+        "Executive Admin",
+        "Operations Admin",
+        "Agent"
+      ].includes(result.user.role);
+
+      document.getElementById("newListingButton").style.display =
+        canCreate ? "inline-block" : "none";
+
+      renderStats();
+      renderTransactions();
+    }
+
+    function renderStats() {
+      const values = [
+        ["Total", portalData.stats.total],
+        ["Pre-Listing", portalData.stats.preListing],
+        ["Photos", portalData.stats.photos],
+        ["Live", portalData.stats.live],
+        ["Under Contract", portalData.stats.underContract],
+        ["Needs Review", portalData.stats.needsReview]
+      ];
+
+      document.getElementById("stats").innerHTML = values.map(function (item) {
+        return (
+          '<div class="stat">' +
+          "<small>" + escapeHtml(item[0]) + "</small>" +
+          "<strong>" + item[1] + "</strong>" +
+          "</div>"
+        );
+      }).join("");
+    }
+
+    function renderTransactions() {
+      if (!portalData) return;
+
+      const query =
+        document.getElementById("search").value.trim().toLowerCase();
+
+      const transactions = portalData.transactions.filter(function (item) {
+        return [
+          item.transactionId,
+          item.propertyAddress,
+          item.clientName,
+          item.listingAgent,
+          item.currentStageName,
+          item.currentActionName
+        ].join(" ").toLowerCase().includes(query);
+      });
+
+      if (!transactions.length) {
+        document.getElementById("content").innerHTML =
+          '<div class="message">' +
+          "No authorized transactions match this view." +
+          "</div>";
+        return;
+      }
+
+      document.getElementById("content").innerHTML =
+        '<div class="cards">' +
+        transactions.map(renderCard).join("") +
+        "</div>";
+    }
+
+        function renderCard(item) {
+      return (
+        '<div class="card" ' +
+          'onclick="openTransactionWorkspace(\'' +
+          escapeJs(item.transactionId) +
+          '\')">' +
+
+          '<div class="card-top">' +
+            "<div>" +
+              '<div class="address">' +
+                escapeHtml(
+                  item.propertyAddress || "Address pending"
+                ) +
+              "</div>" +
+
+              '<div class="meta">' +
+                escapeHtml(
+                  item.clientName || "Client pending"
+                ) +
+                " · " +
+                escapeHtml(item.listingAgent || "") +
+                "<br>Transaction " +
+                escapeHtml(item.transactionId || "") +
+              "</div>" +
+            "</div>" +
+
+            '<div class="stage">' +
+              escapeHtml(item.currentStageName || "") +
+            "</div>" +
+          "</div>" +
+
+          '<div class="card-bottom">' +
+            "<div>" +
+              "<small>Current action</small><br>" +
+
+              "<strong>" +
+                escapeHtml(
+                  item.currentActionName ||
+                  "No action configured"
+                ) +
+              "</strong>" +
+
+              '<div class="meta">' +
+                "Assigned role: " +
+                escapeHtml(
+                  item.assignedRole || "Not assigned"
+                ) +
+              "</div>" +
+            "</div>" +
+
+            '<div onclick="event.stopPropagation()">' +
+              renderActionButton(item) +
+            "</div>" +
+          "</div>" +
+
+        "</div>"
+      );
+    }
+
+    function renderActionButton(item) {
+      if (
+        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION"].includes(item.currentActionKey) &&
+        item.canOpenForm
+      ) {
+        return (
+          '<button class="primary" onclick="openNativeChecklist(\'' +
+          escapeJs(item.transactionId) +
+          '\')">Open Checklist</button>'
+        );
+      }
+
+      if (item.canOpenForm) {
+        return (
+          '<button class="primary" onclick="openCurrentAction(\'' +
+          escapeJs(item.transactionId) +
+          "', this)\">Start Current Task</button>"
+        );
+      }
+
+      if (item.canCompleteInternalAction) {
+        return (
+          '<button class="primary" onclick="completeInternal(\'' +
+          escapeJs(item.transactionId) +
+          "', this)\">Mark Complete</button>"
+        );
+      }
+
+      return (
+        '<button class="secondary" disabled>' +
+        "Waiting on " +
+        escapeHtml(item.assignedRole || "next step") +
+        "</button>"
+      );
+    }
+
+    function openCurrentAction(transactionId, button) {
+      button.disabled = true;
+      button.textContent = "Loading…";
+
+      google.script.run
+        .withSuccessHandler(function (url) {
+          button.disabled = false;
+          button.textContent = "Start Current Task";
+          window.open(url, "_blank");
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
+          button.textContent = "Start Current Task";
+          alert(error.message || String(error));
+        })
+        .launchCurrentAction(transactionId);
+    }
+
+    function completeInternal(transactionId, button) {
+      const notes = prompt("Optional completion note:", "") || "";
+
+      button.disabled = true;
+      button.textContent = "Completing…";
+
+      google.script.run
+        .withSuccessHandler(function () {
+          window.location.reload();
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
+          button.textContent = "Mark Complete";
+          alert(error.message || String(error));
+        })
+        .completeInternalAction(transactionId, notes);
+    }
+    function openTransactionWorkspace(transactionId) {
+      const backdrop =
+        document.getElementById("workspaceBackdrop");
+
+      document.getElementById(
+        "workspaceHeaderAddress"
+      ).textContent = "Loading…";
+
+      document.getElementById(
+        "workspaceHeaderId"
+      ).textContent = transactionId || "";
+
+      document.getElementById(
+        "workspaceBody"
+      ).innerHTML =
+        '<div class="workspace-loading">' +
+          "Loading transaction workspace…" +
+        "</div>";
+
+      backdrop.classList.add("open");
+      document.body.style.overflow = "hidden";
+
+      google.script.run
+        .withSuccessHandler(renderTransactionWorkspace)
+        .withFailureHandler(function (error) {
+          document.getElementById(
+            "workspaceBody"
+          ).innerHTML =
+            '<div class="workspace-error">' +
+              "<strong>Transaction workspace could not load.</strong>" +
+              "<br><br>" +
+              escapeHtml(error.message || String(error)) +
+            "</div>";
+        })
+        .getTransactionWorkspace(transactionId);
+    }
+
+    function closeTransactionWorkspace() {
+      document.getElementById(
+        "workspaceBackdrop"
+      ).classList.remove("open");
+
+      document.body.style.overflow = "";
+    }
+
+    function closeWorkspaceFromBackdrop(event) {
+      if (event.target.id === "workspaceBackdrop") {
+        closeTransactionWorkspace();
+      }
+    }
+
+    function renderTransactionWorkspace(data) {
+      document.getElementById(
+        "workspaceHeaderAddress"
+      ).textContent =
+        data.property.fullAddress ||
+        "Address pending";
+
+      document.getElementById(
+        "workspaceHeaderId"
+      ).textContent =
+        "Transaction " +
+        data.transactionId +
+        " · " +
+        (data.status || "");
+
+      const actionButtons =
+        renderWorkspaceActionButtons(data);
+
+      const reviewNotice =
+        data.listingDetails.needsReview
+          ? (
+              '<div class="workspace-section" ' +
+                'style="border-left:4px solid var(--danger);">' +
+                '<div class="workspace-section-title">' +
+                  "Review Required" +
+                "</div>" +
+                "<div>" +
+                  escapeHtml(
+                    data.listingDetails.reviewReasons ||
+                    "This transaction requires review."
+                  ) +
+                "</div>" +
+              "</div>"
+            )
+          : "";
+
+      document.getElementById(
+        "workspaceBody"
+      ).innerHTML =
+        '<div class="workspace-summary">' +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-stage-row">' +
+              "<div>" +
+                '<div class="detail-label">Current stage</div>' +
+
+                '<div class="workspace-current-stage">' +
+                  escapeHtml(
+                    data.workflow.currentStageName ||
+                    "No stage"
+                  ) +
+                "</div>" +
+
+                '<div class="workspace-current-action">' +
+                  "<strong>Current task:</strong> " +
+                  escapeHtml(
+                    data.workflow.currentActionName ||
+                    "No action configured"
+                  ) +
+                  "<br>" +
+
+                  "<strong>Assigned to:</strong> " +
+                  escapeHtml(
+                    data.workflow.assignedRole ||
+                    "Not assigned"
+                  ) +
+                "</div>" +
+              "</div>" +
+
+              '<div class="stage">' +
+                escapeHtml(data.status || "") +
+              "</div>" +
+            "</div>" +
+
+            '<div class="workspace-progress-track">' +
+              '<div class="workspace-progress-fill" ' +
+                'style="width:' +
+                Number(data.workflow.progressPercent || 0) +
+                '%"></div>' +
+            "</div>" +
+
+            '<div class="workspace-progress-label">' +
+              Number(data.workflow.progressPercent || 0) +
+              "% workflow progress" +
+            "</div>" +
+
+            actionButtons +
+          "</div>" +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Key Details" +
+            "</div>" +
+
+            renderDetailList([
+              [
+                "Appointment",
+                data.appointment.display ||
+                "Not scheduled"
+              ],
+              [
+                "Urgency",
+                data.listingDetails.urgency ||
+                "Normal"
+              ],
+              [
+                "Binder Needed",
+                data.listingDetails.binderNeeded ||
+                "Not specified"
+              ],
+              [
+                "Binder Status",
+                data.listingDetails.binderStatus ||
+                "Not started"
+              ],
+              [
+                "Last Updated",
+                data.listingDetails.updatedAt ||
+                "Not available"
+              ]
+            ]) +
+          "</div>" +
+
+        "</div>" +
+
+        reviewNotice +
+
+        '<div class="workspace-grid">' +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Property" +
+            "</div>" +
+
+            renderDetailList([
+              [
+                "Address",
+                data.property.fullAddress ||
+                "Not provided"
+              ],
+              [
+                "County",
+                data.property.county ||
+                "Not provided"
+              ],
+              [
+                "Property Type",
+                data.property.propertyType ||
+                "Not provided"
+              ]
+            ]) +
+          "</div>" +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Seller" +
+            "</div>" +
+
+            renderDetailList([
+              [
+                "Name",
+                data.seller.fullName ||
+                "Not provided"
+              ],
+              [
+                "Email",
+                data.seller.email ||
+                "Not provided"
+              ],
+              [
+                "Phone",
+                data.seller.phone ||
+                "Not provided"
+              ]
+            ]) +
+          "</div>" +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Assigned Team" +
+            "</div>" +
+
+            renderDetailList([
+              [
+                "Listing Agent",
+                data.team.listingAgent ||
+                "Not assigned"
+              ],
+              [
+                "Agent Email",
+                data.team.agentEmail ||
+                "Not assigned"
+              ],
+              [
+                "Marketing",
+                data.team.marketingEmail ||
+                "Not assigned"
+              ],
+              [
+                "Operations",
+                data.team.operationsEmail ||
+                "Not assigned"
+              ],
+              [
+                "TC",
+                data.team.transactionCoordinatorEmail ||
+                "Not assigned"
+              ]
+            ]) +
+          "</div>" +
+
+          renderFinancialSection(data) +
+
+        "</div>" +
+
+        '<div class="workspace-grid">' +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Workflow Timeline" +
+            "</div>" +
+
+            renderWorkflowTimeline(
+              data.workflow.timeline || []
+            ) +
+          "</div>" +
+
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Recent Activity" +
+            "</div>" +
+
+            renderActivityList(
+              data.activity || []
+            ) +
+          "</div>" +
+
+        "</div>" +
+
+        '<div class="workspace-section">' +
+          '<div class="workspace-section-title">' +
+            "Transaction Notes" +
+          "</div>" +
+
+          '<textarea ' +
+            'id="workspaceNotes" ' +
+            'class="workspace-notes" ' +
+            (
+              data.permissions.canEditNotes
+                ? ""
+                : "disabled"
+            ) +
+          ">" +
+            escapeHtml(
+              data.listingDetails.notes || ""
+            ) +
+          "</textarea>" +
+
+          (
+            data.permissions.canEditNotes
+              ? (
+                  '<div class="workspace-button-row">' +
+                    '<button class="primary" ' +
+                      'onclick="saveWorkspaceNotes(\'' +
+                      escapeJs(data.transactionId) +
+                      "', this)\">" +
+                      "Save Notes" +
+                    "</button>" +
+                  "</div>"
+                )
+              : ""
+          ) +
+        "</div>";
+    }
+
+    function renderDetailList(rows) {
+      return (
+        '<div class="detail-list">' +
+          rows.map(function (row) {
+            return (
+              '<div class="detail-row">' +
+                '<div class="detail-label">' +
+                  escapeHtml(row[0]) +
+                "</div>" +
+
+                '<div class="detail-value">' +
+                  escapeHtml(
+                    row[1] ||
+                    "Not provided"
+                  ) +
+                "</div>" +
+              "</div>"
+            );
+          }).join("") +
+        "</div>"
+      );
+    }
+
+    function renderFinancialSection(data) {
+      if (!data.financials.canView) {
+        return (
+          '<div class="workspace-section">' +
+            '<div class="workspace-section-title">' +
+              "Financials" +
+            "</div>" +
+
+            '<div class="meta">' +
+              "Financial details are restricted for your role." +
+            "</div>" +
+          "</div>"
+        );
+      }
+
+      return (
+        '<div class="workspace-section">' +
+          '<div class="workspace-section-title">' +
+            "Financials" +
+          "</div>" +
+
+          renderDetailList([
+            [
+              "Expected List Price",
+              data.financials.anticipatedListPrice
+            ],
+            [
+              "Actual List Price",
+              data.financials.actualListPrice
+            ],
+            [
+              "Contract Price",
+              data.financials.contractPrice
+            ],
+            [
+              "Closing Date",
+              data.financials.closingDate ||
+              "Not scheduled"
+            ]
+          ]) +
+        "</div>"
+      );
+    }
+
+    function renderWorkflowTimeline(timeline) {
+      if (!timeline.length) {
+        return (
+          '<div class="meta">' +
+            "No workflow stages are configured." +
+          "</div>"
+        );
+      }
+
+      return (
+        '<div class="workflow-timeline">' +
+          timeline.map(function (stage) {
+            return (
+              '<div class="timeline-stage ' +
+                escapeHtml(stage.status || "upcoming") +
+              '">' +
+
+                '<div class="timeline-marker"></div>' +
+
+                "<div>" +
+                  '<div class="timeline-name">' +
+                    escapeHtml(stage.stageName || "") +
+                  "</div>" +
+
+                  '<div class="timeline-description">' +
+                    escapeHtml(stage.description || "") +
+                  "</div>" +
+                "</div>" +
+              "</div>"
+            );
+          }).join("") +
+        "</div>"
+      );
+    }
+
+    function renderActivityList(activity) {
+      if (!activity.length) {
+        return (
+          '<div class="meta">' +
+            "No activity has been recorded yet." +
+          "</div>"
+        );
+      }
+
+      return (
+        '<div class="activity-list">' +
+          activity.map(function (item) {
+            return (
+              '<div class="activity-item">' +
+                '<div class="activity-action">' +
+                  escapeHtml(
+                    formatActivityAction(item.action)
+                  ) +
+                "</div>" +
+
+                '<div class="activity-meta">' +
+                  escapeHtml(
+                    item.timestamp ||
+                    "Time unavailable"
+                  ) +
+
+                  (
+                    item.userEmail
+                      ? (
+                          "<br>" +
+                          escapeHtml(item.userEmail)
+                        )
+                      : ""
+                  ) +
+
+                  (
+                    item.details
+                      ? (
+                          "<br>" +
+                          escapeHtml(item.details)
+                        )
+                      : ""
+                  ) +
+                "</div>" +
+              "</div>"
+            );
+          }).join("") +
+        "</div>"
+      );
+    }
+
+    function formatActivityAction(value) {
+      return String(value || "")
+        .toLowerCase()
+        .split("_")
+        .map(function (word) {
+          return word
+            ? word.charAt(0).toUpperCase() +
+              word.slice(1)
+            : "";
+        })
+        .join(" ");
+    }
+
+    function renderWorkspaceActionButtons(data) {
+      if (
+        ["PRELIST_CHECKLIST", "PHOTO_ORDER", "MLS_SUBMISSION"].includes(data.workflow.currentActionKey) &&
+        (
+          data.permissions.canOpenForm ||
+          data.permissions.canCompleteInternalAction
+        )
+      ) {
+        return (
+          '<div class="workspace-button-row">' +
+            '<button class="primary" ' +
+              'onclick="openNativeChecklist(\'' +
+              escapeJs(data.transactionId) +
+              '\')">' +
+              "Open Checklist" +
+            "</button>" +
+          "</div>"
+        );
+      }
+
+      if (data.permissions.canOpenForm) {
+        return (
+          '<div class="workspace-button-row">' +
+            '<button class="primary" ' +
+              'onclick="openWorkspaceCurrentAction(\'' +
+              escapeJs(data.transactionId) +
+              "', this)\">" +
+              "Start Current Task" +
+            "</button>" +
+          "</div>"
+        );
+      }
+
+      if (
+        data.permissions.canCompleteInternalAction
+      ) {
+        return (
+          '<div class="workspace-button-row">' +
+            '<button class="primary" ' +
+              'onclick="completeWorkspaceInternal(\'' +
+              escapeJs(data.transactionId) +
+              "', this)\">" +
+              "Mark Current Task Complete" +
+            "</button>" +
+          "</div>"
+        );
+      }
+
+      return (
+        '<div class="workspace-button-row">' +
+          '<button class="secondary" disabled>' +
+            "Waiting on " +
+            escapeHtml(
+              data.workflow.assignedRole ||
+              "next step"
+            ) +
+          "</button>" +
+        "</div>"
+      );
+    }
+
+    function openWorkspaceCurrentAction(
+      transactionId,
+      button
+    ) {
+      button.disabled = true;
+      button.textContent = "Loading…";
+
+      google.script.run
+        .withSuccessHandler(function (url) {
+          button.disabled = false;
+          button.textContent =
+            "Start Current Task";
+
+          window.open(url, "_blank");
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
+          button.textContent =
+            "Start Current Task";
+
+          alert(error.message || String(error));
+        })
+        .launchCurrentAction(transactionId);
+    }
+
+    function completeWorkspaceInternal(
+      transactionId,
+      button
+    ) {
+      const notes =
+        prompt(
+          "Optional completion note:",
+          ""
+        ) || "";
+
+      button.disabled = true;
+      button.textContent = "Completing…";
+
+      google.script.run
+        .withSuccessHandler(function () {
+          refreshPortalAndWorkspace(transactionId);
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
+          button.textContent =
+            "Mark Current Task Complete";
+
+          alert(error.message || String(error));
+        })
+        .completeInternalAction(
+          transactionId,
+          notes
+        );
+    }
+
+    function saveWorkspaceNotes(
+      transactionId,
+      button
+    ) {
+      const notes =
+        document.getElementById(
+          "workspaceNotes"
+        ).value;
+
+      button.disabled = true;
+      button.textContent = "Saving…";
+
+      google.script.run
+        .withSuccessHandler(function () {
+          button.disabled = false;
+          button.textContent = "Saved ✓";
+
+          setTimeout(function () {
+            button.textContent = "Save Notes";
+          }, 1600);
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
+          button.textContent = "Save Notes";
+
+          alert(error.message || String(error));
+        })
+        .updateTransactionNotes(
+          transactionId,
+          notes
+        );
+    }
+
+    function refreshPortalAndWorkspace(
+      transactionId
+    ) {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          loadPortal(result);
+
+          google.script.run
+            .withSuccessHandler(
+              renderTransactionWorkspace
+            )
+            .withFailureHandler(function (error) {
+              alert(
+                error.message ||
+                String(error)
+              );
+            })
+            .getTransactionWorkspace(
+              transactionId
+            );
+        })
+        .withFailureHandler(function (error) {
+          alert(error.message || String(error));
+        })
+        .getPortalData();
+    }
+
+    let activeChecklist = null;
+    let checklistAutoSaveTimer = null;
+    let checklistAutoSaveInFlight = false;
+
+
+    function loadParallelListingPreparation(transactionId, targetId) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      target.innerHTML =
+        '<div class="workspace-loading">Loading listing preparation…</div>';
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data || !data.enabled) {
+            target.innerHTML = "";
+            return;
+          }
+
+          target.innerHTML = renderParallelListingPreparation(data);
+        })
+        .withFailureHandler(function (error) {
+          target.innerHTML =
+            '<div class="workspace-error">' +
+              escapeHtml(error.message || String(error)) +
+            "</div>";
+        })
+        .getParallelListingPreparation(transactionId);
+    }
+
+    function renderParallelListingPreparation(data) {
+      return (
+        '<div class="parallel-prep-card">' +
+          "<h3>Listing Preparation</h3>" +
+          "<p>Photography and MLS submission can be completed in either order.</p>" +
+          '<div class="parallel-prep-grid">' +
+            (data.items || []).map(function (item) {
+              const complete = item.status === "Complete";
+
+              return (
+                '<div class="parallel-prep-item' +
+                  (complete ? " complete" : "") +
+                '">' +
+                  "<strong>" +
+                    escapeHtml(item.actionName) +
+                  "</strong>" +
+                  '<div class="parallel-status">' +
+                    (complete ? "✓ Complete" : "Not complete") +
+                  "</div>" +
+                  (
+                    complete
+                      ? '<button class="secondary" disabled>Completed</button>'
+                      : '<button class="primary" onclick="openNativeChecklist(\'' +
+                          escapeJs(data.transactionId) +
+                          "', '" +
+                          escapeJs(item.actionKey) +
+                        '\')">Open Checklist</button>'
+                  ) +
+                "</div>"
+              );
+            }).join("") +
+          "</div>" +
+        "</div>"
+      );
+    }
+
+    function openNativeChecklist(transactionId, actionKey) {
+      const overlay = document.getElementById("checklistOverlay");
+
+      document.getElementById("checklistTitle").textContent = "Loading…";
+      document.getElementById("checklistContext").textContent = "";
+      document.getElementById("checklistBody").innerHTML =
+        '<div class="workspace-loading">Loading checklist…</div>';
+      document.getElementById("checklistActions").style.display = "none";
+
+      overlay.classList.add("open");
+      document.body.style.overflow = "hidden";
+
+      google.script.run
+        .withSuccessHandler(renderNativeChecklist)
+        .withFailureHandler(function (error) {
+          document.getElementById("checklistBody").innerHTML =
+            '<div class="workspace-error">' +
+              "<strong>Checklist could not load.</strong><br><br>" +
+              escapeHtml(error.message || String(error)) +
+            "</div>";
+        })
+        .getNativeChecklist(transactionId, actionKey || '');
+    }
+
+    function closeNativeChecklist() {
+      if (checklistAutoSaveTimer) {
+        clearTimeout(checklistAutoSaveTimer);
+        autoSaveNativeChecklist();
+      }
+
+      document.getElementById("checklistOverlay").classList.remove("open");
+
+      if (
+        document.getElementById("workspaceBackdrop").classList.contains("open")
+      ) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
+    }
+
+    function closeChecklistFromBackdrop(event) {
+      if (event.target.id === "checklistOverlay") {
+        closeNativeChecklist();
+      }
+    }
+
+    function renderNativeChecklist(data) {
+      activeChecklist = data;
+      clearTimeout(checklistAutoSaveTimer);
+
+      document.getElementById("checklistTitle").textContent =
+        data.actionName || "Checklist";
+
+      document.getElementById("checklistContext").textContent =
+        [
+          data.propertyAddress || "Address pending",
+          data.sellerName || "Seller pending",
+          data.listingAgent || "Agent pending",
+          data.appointment
+        ].join(" · ");
+
+      document.getElementById("checklistBody").innerHTML =
+        '<div id="checklistMessage" class="checklist-message"></div>' +
+        '<div id="checklistMissingSummary" class="checklist-missing-summary"></div>' +
+
+        '<div class="checklist-progress">' +
+          '<div class="checklist-progress-top">' +
+            "<span>Required progress</span>" +
+            '<span id="checklistProgressText">' +
+              Number(data.progress.completedRequired || 0) +
+              " of " +
+              Number(data.progress.totalRequired || 0) +
+            "</span>" +
+          "</div>" +
+
+          '<div class="workspace-progress-track">' +
+            '<div id="checklistProgressFill" class="workspace-progress-fill" ' +
+              'style="width:' +
+              Number(data.progress.percent || 0) +
+              '%"></div>' +
+          "</div>" +
+
+          '<div class="checklist-help">' +
+            "Binder requested: " +
+            escapeHtml(data.binderNeeded || "Not specified") +
+            " · Urgency: " +
+            escapeHtml(data.urgency || "Normal") +
+          "</div>" +
+        "</div>" +
+
+        '<div class="checklist-items">' +
+          renderChecklistSections(data.items || []) +
+        "</div>";
+
+      document.getElementById("checklistActions").style.display = "flex";
+      setChecklistSaveStatus("All changes saved", "saved");
+      applyChecklistConditionalLogic();
+      updateChecklistProgressPreview();
+    }
+
+
+    function renderChecklistSections(items) {
+      const sections = [];
+      const bySection = {};
+
+      items.forEach(function (item) {
+        const section = item.section || "Checklist";
+
+        if (!bySection[section]) {
+          bySection[section] = [];
+          sections.push(section);
+        }
+
+        bySection[section].push(item);
+      });
+
+      return sections.map(function (section) {
+        return (
+          '<section class="checklist-section">' +
+            '<h3 class="checklist-section-title">' +
+              escapeHtml(section) +
+            "</h3>" +
+            bySection[section].map(renderChecklistItem).join("") +
+          "</section>"
+        );
+      }).join("");
+    }
+
+    function renderChecklistItem(item) {
+      const requiredMark = item.required
+        ? '<span class="checklist-required"> *</span>'
+        : "";
+
+      const help = item.helpText
+        ? '<div class="checklist-help">' +
+            escapeHtml(item.helpText) +
+          "</div>"
+        : "";
+
+      const id =
+        "checklist_" +
+        String(item.itemKey || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+
+      const classes = [
+        "checklist-item",
+        item.visible === false ? "is-hidden" : "",
+        item.readOnly ? "is-read-only" : ""
+      ].filter(Boolean).join(" ");
+
+      const commonData =
+        ' data-item-key="' + escapeHtml(item.itemKey) + '"' +
+        ' data-item-type="' + escapeHtml(item.type) + '"' +
+        ' data-required-mode="' + escapeHtml(item.requiredMode || "NO") + '"' +
+        ' data-required="' + (item.required ? "true" : "false") + '"' +
+        ' data-condition="' + escapeHtml(item.conditionalRule || "") + '"';
+
+      if (item.readOnly) {
+        return (
+          '<div class="' + classes + '"' +
+            ' data-checklist-container="' + escapeHtml(item.itemKey) + '">' +
+            '<div class="checklist-item-label">' +
+              escapeHtml(item.label) +
+            "</div>" +
+            '<div class="checklist-read-only-value">' +
+              escapeHtml(item.value || "—") +
+            "</div>" +
+            help +
+          "</div>"
+        );
+      }
+
+      if (item.type === "CHECKBOX") {
+        return (
+          '<div class="' + classes + '"' +
+            ' data-checklist-container="' + escapeHtml(item.itemKey) + '">' +
+            '<label class="checklist-checkbox-row" for="' + id + '">' +
+              '<input id="' + id + '"' +
+                commonData +
+                ' type="checkbox"' +
+                (item.value === "Yes" ? " checked" : "") +
+                ' onchange="handleChecklistFieldChange(this)">' +
+              "<span>" +
+                '<span class="checklist-item-label">' +
+                  escapeHtml(item.label) +
+                  requiredMark +
+                "</span>" +
+                help +
+                '<div class="checklist-required-message">Required</div>' +
+              "</span>" +
+            "</label>" +
+          "</div>"
+        );
+      }
+
+      let control = "";
+
+      if (item.type === "SELECT") {
+        control =
+          '<select id="' + id + '"' +
+            commonData +
+            ' onchange="handleChecklistFieldChange(this)">' +
+              '<option value="">Select</option>' +
+              (item.options || []).map(function (option) {
+                return (
+                  '<option value="' + escapeHtml(option) + '"' +
+                    (String(item.value || "") === String(option)
+                      ? " selected"
+                      : "") +
+                  ">" +
+                    escapeHtml(option) +
+                  "</option>"
+                );
+              }).join("") +
+          "</select>";
+      } else if (item.type === "TEXTAREA") {
+        control =
+          '<textarea id="' + id + '"' +
+            commonData +
+            ' oninput="handleChecklistFieldChange(this)">' +
+              escapeHtml(item.value || "") +
+          "</textarea>";
+      } else {
+        const typeMap = {
+          DATE: "date",
+          TIME: "time",
+          NUMBER: "number",
+          CURRENCY: "number",
+          EMAIL: "email",
+          PHONE: "tel",
+          URL: "url",
+          DATETIME: "datetime-local"
+        };
+
+        const htmlType = typeMap[item.type] || "text";
+        const step = item.type === "CURRENCY" ? ' step="0.01"' : "";
+
+        control =
+          '<input id="' + id + '"' +
+            commonData +
+            ' type="' + htmlType + '"' +
+            step +
+            ' value="' + escapeHtml(item.value || "") + '"' +
+            ' oninput="handleChecklistFieldChange(this)">';
+      }
+
+      return (
+        '<div class="' + classes + '"' +
+          ' data-checklist-container="' + escapeHtml(item.itemKey) + '">' +
+          '<label for="' + id + '">' +
+            '<span class="checklist-item-label">' +
+              escapeHtml(item.label) +
+              requiredMark +
+            "</span>" +
+          "</label>" +
+          control +
+          help +
+          '<div class="checklist-required-message">Required</div>' +
+        "</div>"
+      );
+    }
+
+
+    function handleChecklistFieldChange(element) {
+      clearChecklistFieldError(element);
+      applyChecklistConditionalLogic();
+      updateChecklistProgressPreview();
+      scheduleChecklistAutoSave();
+    }
+
+
+    function getChecklistCurrentValues() {
+      const values = {};
+
+      document.querySelectorAll(
+        "#checklistBody [data-item-key]"
+      ).forEach(function (element) {
+        values[element.dataset.itemKey] =
+          element.dataset.itemType === "CHECKBOX"
+            ? (element.checked ? "Yes" : "")
+            : String(element.value || "");
+      });
+
+      return values;
+    }
+
+    function evaluateChecklistCondition(rule, values) {
+      if (!rule) return true;
+
+      const match = String(rule).match(
+        /^\s*([^!=]+?)\s*(=|!=)\s*(.*?)\s*$/
+      );
+
+      if (!match) return true;
+
+      const actual = String(values[match[1].trim()] || "").trim();
+      const expected = match[3].trim();
+
+      return match[2] === "="
+        ? actual === expected
+        : actual !== expected;
+    }
+
+    function applyChecklistConditionalLogic() {
+      const values = getChecklistCurrentValues();
+
+      document.querySelectorAll(
+        "#checklistBody [data-checklist-container]"
+      ).forEach(function (container) {
+        const field = container.querySelector("[data-item-key]");
+        if (!field) return;
+
+        const visible = evaluateChecklistCondition(
+          field.dataset.condition || "",
+          values
+        );
+
+        container.classList.toggle("is-hidden", !visible);
+
+        const requiredMode = field.dataset.requiredMode || "NO";
+        const required =
+          requiredMode === "YES" ||
+          (requiredMode === "CONDITIONAL" && visible);
+
+        field.dataset.required = required ? "true" : "false";
+
+        const label = container.querySelector(".checklist-item-label");
+        if (label) {
+          let marker = label.querySelector(".checklist-required");
+
+          if (required && !marker) {
+            marker = document.createElement("span");
+            marker.className = "checklist-required";
+            marker.textContent = " *";
+            label.appendChild(marker);
+          } else if (!required && marker) {
+            marker.remove();
+          }
+        }
+
+        if (!visible) {
+          container.classList.remove("missing-required");
+        }
+      });
+
+      updateMissingSummaryFromCurrentFields();
+    }
+
+    function clearChecklistFieldError(element) {
+      const item = element.closest(".checklist-item");
+
+      if (item) {
+        item.classList.remove("missing-required");
+      }
+
+      updateMissingSummaryFromCurrentFields();
+    }
+
+    function getMissingRequiredChecklistFields() {
+      return Array.from(
+        document.querySelectorAll(
+          '#checklistBody [data-item-key][data-required="true"]'
+        )
+      ).filter(function (element) {
+        const container = element.closest(".checklist-item");
+        if (container && container.classList.contains("is-hidden")) {
+          return false;
+        }
+
+        if (element.dataset.itemType === "CHECKBOX") {
+          return !element.checked;
+        }
+
+        return String(element.value || "").trim() === "";
+      });
+    }
+
+    function validateChecklistBeforeCompletion() {
+      const missing = getMissingRequiredChecklistFields();
+
+      document.querySelectorAll(
+        "#checklistBody .checklist-item.missing-required"
+      ).forEach(function (item) {
+        item.classList.remove("missing-required");
+      });
+
+      missing.forEach(function (element) {
+        const item = element.closest(".checklist-item");
+
+        if (item) {
+          item.classList.add("missing-required");
+        }
+      });
+
+      renderMissingChecklistSummary(missing);
+
+      if (missing.length) {
+        const firstItem = missing[0].closest(".checklist-item");
+
+        if (firstItem) {
+          firstItem.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }
+
+        setTimeout(function () {
+          missing[0].focus({ preventScroll: true });
+        }, 450);
+
+        return false;
+      }
+
+      return true;
+    }
+
+    function renderMissingChecklistSummary(missing) {
+      const summary = document.getElementById("checklistMissingSummary");
+
+      if (!summary) return;
+
+      if (!missing.length) {
+        summary.innerHTML = "";
+        summary.classList.remove("show");
+        return;
+      }
+
+      summary.innerHTML =
+        "<strong>" +
+          missing.length +
+          " required " +
+          (missing.length === 1 ? "question needs" : "questions need") +
+          " to be completed:</strong>" +
+        missing.map(function (element) {
+          const item = element.closest(".checklist-item");
+          const label = item
+            ? item.querySelector(".checklist-item-label")
+            : null;
+
+          return (
+            '<button type="button" class="checklist-missing-link" ' +
+              'onclick="jumpToChecklistField(\'' +
+              escapeJs(element.id) +
+              '\')">• ' +
+              escapeHtml(
+                label
+                  ? label.textContent.replace("*", "").trim()
+                  : "Required question"
+              ) +
+            "</button>"
+          );
+        }).join("");
+
+      summary.classList.add("show");
+    }
+
+    function updateMissingSummaryFromCurrentFields() {
+      const summary = document.getElementById("checklistMissingSummary");
+
+      if (!summary || !summary.classList.contains("show")) {
+        return;
+      }
+
+      const missing = getMissingRequiredChecklistFields();
+
+      missing.forEach(function (element) {
+        const item = element.closest(".checklist-item");
+
+        if (item) {
+          item.classList.add("missing-required");
+        }
+      });
+
+      renderMissingChecklistSummary(missing);
+    }
+
+    function jumpToChecklistField(id) {
+      const element = document.getElementById(id);
+
+      if (!element) return;
+
+      const item = element.closest(".checklist-item");
+
+      if (item) {
+        item.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+
+      setTimeout(function () {
+        element.focus({ preventScroll: true });
+      }, 450);
+    }
+
+    function scheduleChecklistAutoSave() {
+      clearTimeout(checklistAutoSaveTimer);
+
+      setChecklistSaveStatus("Changes pending…", "saving");
+
+      checklistAutoSaveTimer = setTimeout(function () {
+        autoSaveNativeChecklist();
+      }, 1200);
+    }
+
+    function autoSaveNativeChecklist() {
+      if (!activeChecklist || checklistAutoSaveInFlight) return;
+
+      checklistAutoSaveInFlight = true;
+      setChecklistSaveStatus("Saving…", "saving");
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          checklistAutoSaveInFlight = false;
+          activeChecklist = result;
+          setChecklistSaveStatus("Saved ✓", "saved");
+        })
+        .withFailureHandler(function (error) {
+          checklistAutoSaveInFlight = false;
+          setChecklistSaveStatus("Autosave failed", "error");
+          console.error(error.message || String(error));
+        })
+        .saveNativeChecklistProgress(
+          activeChecklist.transactionId,
+          activeChecklist.actionKey,
+          collectChecklistItems()
+        );
+    }
+
+    function setChecklistSaveStatus(message, statusClass) {
+      const element = document.getElementById("checklistSaveStatus");
+
+      if (!element) return;
+
+      element.textContent = message || "";
+      element.className =
+        "checklist-save-status" +
+        (statusClass ? " " + statusClass : "");
+    }
+
+    function collectChecklistItems() {
+      return Array.from(
+        document.querySelectorAll("#checklistBody [data-item-key]")
+      ).map(function (element) {
+        return {
+          itemKey: element.dataset.itemKey,
+          value:
+            element.dataset.itemType === "CHECKBOX"
+              ? element.checked
+              : String(element.value || "").trim()
+        };
+      });
+    }
+
+    function updateChecklistProgressPreview() {
+      const required = Array.from(
+        document.querySelectorAll(
+          '#checklistBody [data-item-key][data-required="true"]'
+        )
+      );
+
+      const completed = required.filter(function (element) {
+        if (element.dataset.itemType === "CHECKBOX") {
+          return element.checked;
+        }
+
+        return String(element.value || "").trim() !== "";
+      }).length;
+
+      const percent = required.length
+        ? Math.round((completed / required.length) * 100)
+        : 100;
+
+      const text = document.getElementById("checklistProgressText");
+      const fill = document.getElementById("checklistProgressFill");
+
+      if (text) {
+        text.textContent = completed + " of " + required.length;
+      }
+
+      if (fill) {
+        fill.style.width = percent + "%";
+      }
+    }
+
+    function saveChecklist(complete) {
+      if (!activeChecklist) return;
+
+      if (complete && !validateChecklistBeforeCompletion()) {
+        showChecklistMessage(
+          "Please complete the required questions highlighted in red.",
+          true
+        );
+        return;
+      }
+
+      clearTimeout(checklistAutoSaveTimer);
+
+      const saveButton = document.getElementById("saveChecklistButton");
+      const completeButton = document.getElementById("completeChecklistButton");
+
+      saveButton.disabled = true;
+      completeButton.disabled = true;
+
+      const originalText = completeButton.textContent;
+
+      if (complete) {
+        completeButton.textContent = "Completing…";
+      } else {
+        saveButton.textContent = "Saving…";
+      }
+
+      const method = complete
+        ? "completeNativeChecklist"
+        : "saveNativeChecklistProgress";
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          saveButton.disabled = false;
+          completeButton.disabled = false;
+          saveButton.textContent = "Save Progress";
+          completeButton.textContent = originalText;
+
+          if (complete) {
+            closeNativeChecklist();
+            refreshPortalAndWorkspace(activeChecklist.transactionId);
+            return;
+          }
+
+          activeChecklist = result;
+          renderNativeChecklist(result);
+          setChecklistSaveStatus("Saved ✓", "saved");
+          showChecklistMessage(
+            "Progress saved. You can close this checklist and return later.",
+            false
+          );
+        })
+        .withFailureHandler(function (error) {
+          saveButton.disabled = false;
+          completeButton.disabled = false;
+          saveButton.textContent = "Save Progress";
+          completeButton.textContent = originalText;
+
+          showChecklistMessage(error.message || String(error), true);
+        })[method](
+          activeChecklist.transactionId,
+          activeChecklist.actionKey,
+          collectChecklistItems()
+        );
+    }
+
+    function showChecklistMessage(message, isError) {
+      const element = document.getElementById("checklistMessage");
+
+      if (!element) {
+        alert(message);
+        return;
+      }
+
+      element.textContent = message;
+      element.className =
+        "checklist-message show " +
+        (isError ? "error" : "success");
+
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function openWizard() {
+      clearWizardError();
+      resetWizard();
+
+      document
+        .getElementById("wizardBackdrop")
+        .classList.add("open");
+
+      document.body.style.overflow = "hidden";
+
+      if (wizardOptions) {
+        populateWizard();
+        return;
+      }
+
+      setWizardBusy(true, "Loading…");
+
+      google.script.run
+        .withSuccessHandler(function (options) {
+          wizardOptions = options;
+          populateWizard();
+          setWizardBusy(false);
+        })
+        .withFailureHandler(function (error) {
+          setWizardBusy(false);
+          showWizardError(error.message || String(error));
+        })
+        .getNewListingWizardOptions();
+    }
+
+    function closeWizard() {
+      if (wizardBusy) return;
+
+      document
+        .getElementById("wizardBackdrop")
+        .classList.remove("open");
+
+      document.body.style.overflow = "";
+    }
+
+    function closeFromBackdrop(event) {
+      if (event.target.id === "wizardBackdrop") {
+        closeWizard();
+      }
+    }
+
+    function resetWizard() {
+      document.getElementById("wizardForm").reset();
+      document.getElementById("state").value = "MI";
+      currentStep = 1;
+      updateStep();
+    }
+
+    function populateWizard() {
+      fillSelect(
+        "county",
+        wizardOptions.counties.map(function (county) {
+          return { value: county, label: county };
+        }),
+        "Select county"
+      );
+
+      fillSelect(
+        "propertyType",
+        wizardOptions.propertyTypes.map(function (type) {
+          return { value: type, label: type };
+        }),
+        "Select property type"
+      );
+
+      fillSelect(
+        "agentEmail",
+        wizardOptions.agents.map(function (agent) {
+          return {
+            value: agent.email,
+            label: agent.name
+          };
+        }),
+        "Select listing agent"
+      );
+
+      fillSelect(
+        "assignedMarketingEmail",
+        wizardOptions.marketingUsers.map(function (person) {
+          return {
+            value: person.email,
+            label: person.name
+          };
+        }),
+        "Use default marketing assignment"
+      );
+
+      fillSelect(
+        "assignedTCEmail",
+        wizardOptions.tcUsers.map(function (person) {
+          return {
+            value: person.email,
+            label: person.name
+          };
+        }),
+        "Assign later"
+      );
+
+      if (wizardOptions.defaults.state) {
+        document.getElementById("state").value =
+          wizardOptions.defaults.state;
+      }
+
+      if (wizardOptions.defaults.marketingEmail) {
+        document.getElementById("assignedMarketingEmail").value =
+          wizardOptions.defaults.marketingEmail;
+      }
+
+      if (
+        wizardOptions.currentUser.role === "Agent" &&
+        wizardOptions.currentUser.email
+      ) {
+        document.getElementById("agentEmail").value =
+          wizardOptions.currentUser.email;
+      }
+
+      syncAgentName();
+    }
+
+    function fillSelect(id, options, placeholder) {
+      const element = document.getElementById(id);
+
+      element.innerHTML =
+        '<option value="">' +
+        escapeHtml(placeholder) +
+        "</option>" +
+        options.map(function (option) {
+          return (
+            '<option value="' +
+            escapeHtml(option.value) +
+            '">' +
+            escapeHtml(option.label) +
+            "</option>"
+          );
+        }).join("");
+    }
+
+    function syncAgentName() {
+      const select = document.getElementById("agentEmail");
+      const option = select.options[select.selectedIndex];
+
+      document.getElementById("listingAgent").value =
+        option && option.value ? option.text : "";
+    }
+
+    function nextStep() {
+      clearWizardError();
+
+      const error = validateStep(currentStep);
+
+      if (error) {
+        showWizardError(error);
+        return;
+      }
+
+      if (currentStep < 3) {
+        currentStep += 1;
+        updateStep();
+      } else {
+        submitListing();
+      }
+    }
+
+    function previousStep() {
+      clearWizardError();
+
+      if (currentStep > 1) {
+        currentStep -= 1;
+        updateStep();
+      }
+    }
+
+    function updateStep() {
+      document.querySelectorAll(".panel").forEach(function (panel) {
+        panel.classList.toggle(
+          "active",
+          Number(panel.dataset.step) === currentStep
+        );
+      });
+
+      document.querySelectorAll(".progress-item").forEach(
+        function (item, index) {
+          item.classList.toggle("active", index + 1 <= currentStep);
+        }
+      );
+
+      document.getElementById("backButton").disabled =
+        currentStep === 1;
+
+      document.getElementById("nextButton").textContent =
+        currentStep === 3 ? "Create Listing" : "Continue";
+    }
+
+    function validateStep(step) {
+      if (step === 1) {
+        if (!fieldValue("propertyAddress")) {
+          return "Property address is required.";
+        }
+
+        if (!fieldValue("city")) {
+          return "City is required.";
+        }
+
+        if (!fieldValue("state")) {
+          return "State is required.";
+        }
+
+        if (!/^\d{5}(-\d{4})?$/.test(fieldValue("postalCode"))) {
+          return "Enter a valid ZIP code.";
+        }
+      }
+
+      if (step === 2) {
+        if (!fieldValue("clientFirstName")) {
+          return "Seller first name is required.";
+        }
+
+        if (!fieldValue("clientLastName")) {
+          return "Seller last name is required.";
+        }
+
+        const email = fieldValue("clientEmail");
+
+        if (
+          email &&
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        ) {
+          return "Enter a valid seller email.";
+        }
+      }
+
+      if (step === 3 && !fieldValue("agentEmail")) {
+        return "Listing agent is required.";
+      }
+
+      return "";
+    }
+
+    function submitListing() {
+      setWizardBusy(true, "Creating Listing…");
+
+      const payload = {
+        propertyAddress: fieldValue("propertyAddress"),
+        addressLine2: fieldValue("addressLine2"),
+        city: fieldValue("city"),
+        state: fieldValue("state"),
+        postalCode: fieldValue("postalCode"),
+        county: fieldValue("county"),
+        propertyType: fieldValue("propertyType"),
+
+        clientFirstName: fieldValue("clientFirstName"),
+        clientLastName: fieldValue("clientLastName"),
+        clientEmail: fieldValue("clientEmail"),
+        clientPhone: fieldValue("clientPhone"),
+
+        listingAgent: fieldValue("listingAgent"),
+        agentEmail: fieldValue("agentEmail"),
+        anticipatedListPrice:
+          fieldValue("anticipatedListPrice"),
+
+        appointmentDate: fieldValue("appointmentDate"),
+        appointmentTime: fieldValue("appointmentTime"),
+
+        assignedMarketingEmail:
+          fieldValue("assignedMarketingEmail"),
+
+        assignedTCEmail: fieldValue("assignedTCEmail"),
+        binderNeeded: fieldValue("binderNeeded"),
+        urgency: fieldValue("urgency"),
+        notes: fieldValue("notes")
+      };
+
+      google.script.run
+        .withSuccessHandler(showWizardSuccess)
+        .withFailureHandler(function (error) {
+          setWizardBusy(false);
+          showWizardError(error.message || String(error));
+        })
+        .createNewListingFromWizard(payload);
+    }
+
+    function showWizardSuccess(result) {
+      wizardBusy = false;
+
+      document.getElementById("modalBody").innerHTML =
+        '<div class="success">' +
+          '<div class="success-icon">✓</div>' +
+          '<div class="section-title">Listing Created</div>' +
+          "<p>" +
+            escapeHtml(
+              result.message ||
+              "The listing was created successfully."
+            ) +
+          "</p>" +
+        "</div>";
+
+      document.getElementById("progress").style.display = "none";
+
+      document.getElementById("modalFooter").innerHTML =
+        '<button class="secondary" onclick="closeWizard()">' +
+          "Close" +
+        "</button>" +
+        '<button class="primary" onclick="openNewListingWorkspace(\'' +
+  escapeJs(result.transactionId) +
+'\')">' +
+  "View Listing" +
+"</button>";
+    }
+
+    function openNewListingWorkspace(transactionId) {
+      document
+        .getElementById("wizardBackdrop")
+        .classList.remove("open");
+
+      document.body.style.overflow = "";
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          loadPortal(result);
+          openTransactionWorkspace(transactionId);
+        })
+        .withFailureHandler(function (error) {
+          alert(error.message || String(error));
+        })
+        .getPortalData();
+    }
+
+    function setWizardBusy(isBusy, text) {
+      wizardBusy = isBusy;
+
+      const nextButton = document.getElementById("nextButton");
+      const backButton = document.getElementById("backButton");
+
+      if (!nextButton || !backButton) return;
+
+      nextButton.disabled = isBusy;
+      backButton.disabled = isBusy || currentStep === 1;
+
+      if (isBusy) {
+        nextButton.textContent = text || "Loading…";
+      } else {
+        nextButton.textContent =
+          currentStep === 3 ? "Create Listing" : "Continue";
+      }
+    }
+
+    function showWizardError(message) {
+      const element = document.getElementById("wizardError");
+      element.textContent = message;
+      element.classList.add("show");
+    }
+
+    function clearWizardError() {
+      const element = document.getElementById("wizardError");
+
+      if (!element) return;
+
+      element.textContent = "";
+      element.classList.remove("show");
+    }
+
+    function fieldValue(id) {
+      const element = document.getElementById(id);
+      return element
+        ? String(element.value || "").trim()
+        : "";
+    }
+
+    function showPortalError(message) {
+      document.getElementById("content").innerHTML =
+        '<div class="message error">' +
+        "<strong>JBA OS could not load.</strong><br><br>" +
+        escapeHtml(message) +
+        "</div>";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeJs(value) {
+      return String(value || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>
