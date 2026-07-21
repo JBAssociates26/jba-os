@@ -1014,6 +1014,31 @@
 </head>
 
 <body>
+  <div id="passwordGate" class="modal-backdrop open">
+    <div class="modal" style="max-width:360px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">JBA OS</div>
+          <div class="subtitle">Enter the access code to continue.</div>
+        </div>
+      </div>
+
+      <form onsubmit="checkPasswordGate(event)" style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+        <input
+          id="passwordGateInput"
+          type="password"
+          placeholder="Access code"
+          autocomplete="off"
+          style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;"
+        >
+        <div id="passwordGateError" style="color:#b3261e;font-size:13px;display:none;">
+          Incorrect code. Try again.
+        </div>
+        <button type="submit" class="primary">Enter</button>
+      </form>
+    </div>
+  </div>
+
   <header>
     <div>
       <div class="brand" id="company">Jim Bunn &amp; Associates</div>
@@ -1352,7 +1377,33 @@
     let currentStep = 1;
     let wizardBusy = false;
 
+    var PASSWORD_GATE_CODE = "JBA";
+
+    function checkPasswordGate(event) {
+      event.preventDefault();
+
+      const input = document.getElementById("passwordGateInput").value.trim();
+
+      if (input.toUpperCase() !== PASSWORD_GATE_CODE) {
+        document.getElementById("passwordGateError").style.display = "block";
+        return;
+      }
+
+      sessionStorage.setItem("jbaOsGatePassed", "1");
+      document.getElementById("passwordGate").classList.remove("open");
+      initPortal();
+    }
+
     window.addEventListener("load", function () {
+      if (sessionStorage.getItem("jbaOsGatePassed") === "1") {
+        document.getElementById("passwordGate").classList.remove("open");
+        initPortal();
+      } else {
+        document.getElementById("passwordGateInput").focus();
+      }
+    });
+
+    function initPortal() {
       if (
         typeof google === "undefined" ||
         !google.script ||
@@ -1368,7 +1419,7 @@
           showPortalError(error.message || String(error));
         })
         .getPortalData();
-    });
+    }
 
     function loadPortal(result) {
       portalData = result;
