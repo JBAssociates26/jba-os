@@ -615,31 +615,37 @@ function canUserPerformAction_(user, action) {
    WORKFLOW ENGINE
    ========================================================= */
 
+/**
+ * Resolves the transaction's current action. Looks it up by Action Key
+ * first (workflow-scoped, not stage-scoped) since parallel actions like
+ * PHOTO_ORDER/MLS_SUBMISSION belong to different Stage Keys than the
+ * transaction's own Current Stage Key while routing between them - a
+ * stage-scoped lookup would silently miss the real current action and
+ * fall back to the wrong one. Only falls back to "first action of the
+ * current stage" when no Current Action Key is set yet.
+ */
 function getCurrentActionForTransaction_(tx) {
   if (tx['Status'] === 'Closed') return null;
 
   const workflowKey = tx['Workflow Key'];
-  const stageKey = tx['Current Stage Key'];
-
-  const actions = sheetObjects_(JBA_OS.sheets.workflowActions)
+  const allActions = sheetObjects_(JBA_OS.sheets.workflowActions)
     .filter(row =>
       row['Workflow Key'] === workflowKey &&
-      row['Stage Key'] === stageKey &&
       row['Active?'] === 'Yes'
-    )
-    .sort((a, b) =>
-      Number(a['Action Order'] || 0) - Number(b['Action Order'] || 0)
     );
-
-  if (!actions.length) return null;
 
   const currentActionKey = tx['Current Action Key'];
   if (currentActionKey) {
-    const exact = actions.find(row => row['Action Key'] === currentActionKey);
+    const exact = allActions.find(row => row['Action Key'] === currentActionKey);
     if (exact) return exact;
   }
 
-  return actions[0];
+  const stageKey = tx['Current Stage Key'];
+  return allActions
+    .filter(row => row['Stage Key'] === stageKey)
+    .sort((a, b) =>
+      Number(a['Action Order'] || 0) - Number(b['Action Order'] || 0)
+    )[0] || null;
 }
 
 function advanceTransaction_(user, tx, action, details) {

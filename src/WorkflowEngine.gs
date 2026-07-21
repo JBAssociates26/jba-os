@@ -89,7 +89,12 @@ function routeParallelWorkflow_(user, tx, completedAction, checklist) {
       'All listing-preparation workstreams are complete. Advancing workflow.'
     );
 
+    // Always advance via the group's first action (PHOTO_ORDER) regardless
+    // of which of the two parallel actions actually finished last, so the
+    // transaction deterministically goes through Confirm Photos before
+    // Final Review instead of depending on completion order.
     const actionForAdvance =
+      getChecklistActionByKey_(tx, group.actionKeys[0]) ||
       completedAction ||
       getChecklistActionByKey_(tx, tx['Current Action Key']);
 
@@ -113,7 +118,8 @@ function routeParallelWorkflow_(user, tx, completedAction, checklist) {
   const nextAction = setTransactionCurrentAction_(
     transactionId,
     tx,
-    nextActionKey
+    nextActionKey,
+    user
   );
 
   logActivity_(
@@ -156,9 +162,12 @@ function chooseNextParallelAction_(tx, remainingActionKeys) {
 }
 
 /**
- * Updates the transaction's current action while keeping it in the same stage.
+ * Updates the transaction's current action. Does not touch Current Stage
+ * Key/Name - PHOTO_ORDER and MLS_SUBMISSION belong to different stages,
+ * and getCurrentActionForTransaction_ resolves the current action by
+ * Action Key directly rather than requiring the stage to match.
  */
-function setTransactionCurrentAction_(transactionId, tx, actionKey) {
+function setTransactionCurrentAction_(transactionId, tx, actionKey, user) {
   const action = getChecklistActionByKey_(tx, actionKey);
   const sheet = getDatabase_().getSheetByName(JBA_OS.sheets.transactions);
 
@@ -192,7 +201,8 @@ function setTransactionCurrentAction_(transactionId, tx, actionKey) {
   const updates = {
     'Current Action Key': actionKey,
     'Current Action Name': action['Action Name'] || actionKey,
-    'Updated At': new Date()
+    'Updated At': new Date(),
+    'Last Action By': user ? user.email : ''
   };
 
   Object.keys(updates).forEach(header => {
