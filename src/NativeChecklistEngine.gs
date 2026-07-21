@@ -260,10 +260,10 @@ function checklistV4Row_(
    adjust items directly in the Checklist Templates sheet afterward —
    no code changes needed.
 
-   Run setupContractToCloseChecklists_() once. Safe to re-run.
+   Run setupContractToCloseChecklists() once. Safe to re-run.
    ========================================================= */
 
-function setupContractToCloseChecklists_() {
+function setupContractToCloseChecklists() {
   seedAcceptedOfferChecklistTemplate_();
   seedContractChecklistTemplate_();
   seedClosingChecklistTemplate_();
