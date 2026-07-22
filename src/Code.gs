@@ -1389,6 +1389,44 @@ function getTransaction_(transactionId) {
   );
 }
 
+function normalizeAddressForMatch_(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[.,#]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Looks up an existing transaction (any workflow, any status) by
+ * property address, for duplicate-prevention when creating a new
+ * Seller or Buyer transaction. Requires sign-in but not authorization
+ * on the matched transaction itself - only returns enough to decide
+ * whether to open it or continue anyway.
+ */
+function findTransactionByPropertyAddress(propertyAddress) {
+  requireUser_();
+
+  const target = normalizeAddressForMatch_(propertyAddress);
+  if (!target) return { found: false };
+
+  const match = sheetObjects_(JBA_OS.sheets.transactions).find(row =>
+    normalizeAddressForMatch_(row['Property Address']) === target ||
+    normalizeAddressForMatch_(row['Address Line 1']) === target
+  );
+
+  if (!match) return { found: false };
+
+  return {
+    found: true,
+    transactionId: match['Transaction ID'],
+    propertyAddress: match['Property Address'] || match['Address Line 1'] || '',
+    workflowKey: match['Workflow Key'] || '',
+    status: match['Status'] || '',
+    currentStageName: match['Current Stage Name'] || ''
+  };
+}
+
 function appendObject_(sheetName, object) {
   const sheet = getDatabase_().getSheetByName(sheetName);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn())

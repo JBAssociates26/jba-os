@@ -1011,6 +1011,12 @@
       }
     }
   </style>
+
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn_2O9Vuvep7gqx9Y_WjQOvTFPKzKlAAQ&libraries=places&callback=initGooglePlacesAutocomplete"
+    async
+    defer
+  ></script>
 </head>
 
 <body>
@@ -1484,9 +1490,7 @@
         <input id="buyerPropertyAddress" placeholder="Property address" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;">
           <input id="buyerCity" placeholder="City" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
-          <select id="buyerState" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
-            <option value="MI">MI</option>
-          </select>
+          <input id="buyerState" value="MI" maxlength="2" placeholder="State" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
           <input id="buyerPostalCode" placeholder="ZIP" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -1520,11 +1524,154 @@
     </div>
   </div>
 
+  <div
+    id="existingPropertyBackdrop"
+    class="modal-backdrop"
+    onclick="closeExistingPropertyFromBackdrop(event)"
+  >
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">This property already exists</div>
+          <div class="subtitle" id="existingPropertySubtitle"></div>
+        </div>
+        <button class="close" onclick="closeExistingPropertyModal()">&times;</button>
+      </div>
+
+      <div style="padding:20px;display:flex;flex-direction:column;gap:10px;">
+        <button type="button" class="primary" onclick="openExistingPropertyTransaction()">Open Existing Transaction</button>
+        <button type="button" class="secondary" onclick="continueAnywayExistingProperty()">Continue Anyway</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let portalData = null;
     let wizardOptions = null;
     let currentStep = 1;
     let wizardBusy = false;
+
+    // ---- Google Address Autocomplete ----
+
+    function initGooglePlacesAutocomplete() {
+      if (typeof google === "undefined" || !google.maps || !google.maps.places) return;
+
+      attachPlacesAutocomplete("propertyAddress", {
+        city: "city", state: "state", postalCode: "postalCode", county: "county"
+      }, "seller");
+
+      attachPlacesAutocomplete("buyerPropertyAddress", {
+        city: "buyerCity", state: "buyerState", postalCode: "buyerPostalCode", county: "buyerCounty"
+      }, "buyer");
+    }
+
+    function attachPlacesAutocomplete(inputId, fields, context) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ["address"],
+        componentRestrictions: { country: "us" },
+        fields: ["address_components", "formatted_address"]
+      });
+
+      autocomplete.addListener("place_changed", function () {
+        const place = autocomplete.getPlace();
+        if (!place || !place.address_components) return;
+        handlePlaceSelected(place, fields, context, input);
+      });
+    }
+
+    function handlePlaceSelected(place, fields, context, addressInput) {
+      const components = {};
+      place.address_components.forEach(function (component) {
+        component.types.forEach(function (type) {
+          components[type] = component;
+        });
+      });
+
+      const streetNumber = components.street_number ? components.street_number.long_name : "";
+      const route = components.route ? components.route.long_name : "";
+      const streetAddress = [streetNumber, route].filter(Boolean).join(" ");
+
+      if (streetAddress) addressInput.value = streetAddress;
+
+      const city = components.locality || components.sublocality || components.postal_town;
+      if (city) document.getElementById(fields.city).value = city.long_name;
+
+      const state = components.administrative_area_level_1;
+      if (state) document.getElementById(fields.state).value = state.short_name;
+
+      const postalCode = components.postal_code;
+      if (postalCode) document.getElementById(fields.postalCode).value = postalCode.long_name;
+
+      const county = components.administrative_area_level_2;
+      if (county) {
+        const countyName = county.long_name.replace(/\s+County$/i, "").trim();
+        const countySelect = document.getElementById(fields.county);
+        const matchedOption = Array.from(countySelect.options).find(function (option) {
+          return option.value.toLowerCase() === countyName.toLowerCase();
+        });
+        countySelect.value = matchedOption ? matchedOption.value : "Other";
+      }
+
+      checkExistingProperty(addressInput.value, context);
+    }
+
+    // ---- Existing Property Detection ----
+
+    let existingPropertyMatch = null;
+    let existingPropertyContext = null;
+
+    function checkExistingProperty(address, context) {
+      if (!address) return;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result.found) return;
+
+          existingPropertyMatch = result;
+          existingPropertyContext = context;
+
+          document.getElementById("existingPropertySubtitle").textContent =
+            result.propertyAddress + " — " +
+            (result.workflowKey === "BUYER_TRANSACTION" ? "Buyer" : "Seller") +
+            " · " + (result.status === "Active" ? result.currentStageName : result.status);
+
+          document.getElementById("existingPropertyBackdrop").classList.add("open");
+        })
+        .withFailureHandler(function () {
+          // Duplicate check failing shouldn't block the form - fail silently.
+        })
+        .findTransactionByPropertyAddress(address);
+    }
+
+    function closeExistingPropertyModal() {
+      document.getElementById("existingPropertyBackdrop").classList.remove("open");
+    }
+
+    function closeExistingPropertyFromBackdrop(event) {
+      if (event.target.id === "existingPropertyBackdrop") {
+        closeExistingPropertyModal();
+      }
+    }
+
+    function continueAnywayExistingProperty() {
+      closeExistingPropertyModal();
+    }
+
+    function openExistingPropertyTransaction() {
+      const transactionId = existingPropertyMatch ? existingPropertyMatch.transactionId : null;
+      const context = existingPropertyContext;
+
+      closeExistingPropertyModal();
+      if (!transactionId) return;
+
+      if (context === "seller") closeWizard();
+      if (context === "buyer") closeBuyerWizard();
+
+      openTransactionWorkspace(transactionId);
+    }
 
     var PASSWORD_GATE_CODE = "JBA";
 
